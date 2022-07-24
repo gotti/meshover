@@ -1,0 +1,79 @@
+syntax = "proto3";
+option go_package = "./spec";
+
+service ControlPlaneService {
+  rpc ListPeers(ListPeersRequest) returns (ListPeersResponse);
+  rpc AddressAssign(AddressAssignRequest) returns (AddressAssignResponse);
+  rpc RegisterPeer(RegisterPeerRequest) returns (RegisterPeerResponse);
+  rpc UpdatePeerStatus(UpdatePeerStatusRequest) returns (UpdatePeerStatusResponse);
+}
+
+message Address {
+  string endpointAddress = 1;
+}
+
+message UnderlayUnknown {
+  Address endpoint = 1;
+}
+
+message UnderlayTailscale {
+  Address endpoint = 1;
+}
+
+message UnderlayWireguard {
+  Address endpoint = 1;
+  bytes publicKey = 2;
+}
+
+message Peer {
+  string name = 1;
+  string asn = 2;
+  Address address = 3;
+  oneof underlay {
+    UnderlayUnknown underlayUnknown = 4;
+    UnderlayTailscale underlayTailscale = 5;
+    UnderlayWireguard underlayWireguard = 6;
+  }
+}
+
+message Peers {
+  repeated Peer peers = 1;
+}
+
+message ListPeersRequest {
+}
+
+message ListPeersResponse {
+  Peers peers = 1;
+}
+
+message AddressAssignRequest {
+  string name = 1;
+}
+
+message AddressAssignResponse {
+  Address address = 1;
+}
+
+message RegisterPeerRequest {
+  Peer peer = 1;
+}
+
+message RegisterPeerResponse {
+  bool ok = 1;
+}
+
+message PeerStatus {
+  Peer peer = 1;
+  uint64 txBytes = 2;
+  uint64 rxBytes = 3;
+  string exporterEndpoint = 4;
+}
+
+message UpdatePeerStatusRequest {
+  repeated PeerStatus peersStatus = 1;
+}
+
+message UpdatePeerStatusResponse {
+  bool ok = 1;
+}
