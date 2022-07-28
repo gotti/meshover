@@ -1,6 +1,8 @@
 syntax = "proto3";
 option go_package = "./spec";
 
+import "protoc-gen-validate/validate/validate.proto";
+
 service ControlPlaneService {
   rpc ListPeers(ListPeersRequest) returns (ListPeersResponse);
   rpc AddressAssign(AddressAssignRequest) returns (AddressAssignResponse);
@@ -9,7 +11,12 @@ service ControlPlaneService {
 }
 
 message Address {
-  string endpointAddress = 1;
+  string ipaddress = 1 [(validate.rules).string.ip = true];
+}
+
+message AddressAndPort {
+  Address ipaddress = 1;
+  int32 port = 2 [(validate.rules).int32 = {gte: 1, lte:65535}];
 }
 
 message UnderlayUnknown {
@@ -20,19 +27,38 @@ message UnderlayTailscale {
   Address endpoint = 1;
 }
 
+message Curve25519Key {
+  bytes key = 1 [(validate.rules).bytes.len = 32];
+}
+
+message Curve25519KeyPair {
+  Curve25519Key publickey = 1;
+  Curve25519Key privatekey = 2;
+}
+
 message UnderlayWireguard {
-  Address endpoint = 1;
-  bytes publicKey = 2;
+  AddressAndPort endpoint = 1;
+  Curve25519Key publicKey = 2;
+}
+
+message UnderlayLinuxKernelWireguard {
+  AddressAndPort endpoint = 1;
+  Curve25519Key publicKey = 2;
+}
+
+message ASN {
+  uint32 number = 1;
 }
 
 message Peer {
   string name = 1;
-  string asn = 2;
+  ASN asnumber = 2;
   Address address = 3;
   oneof underlay {
     UnderlayUnknown underlayUnknown = 4;
     UnderlayTailscale underlayTailscale = 5;
     UnderlayWireguard underlayWireguard = 6;
+    UnderlayLinuxKernelWireguard underlayLinuxKernelWireguard = 7;
   }
 }
 
@@ -53,6 +79,7 @@ message AddressAssignRequest {
 
 message AddressAssignResponse {
   Address address = 1;
+  ASN asnumber = 2;
 }
 
 message RegisterPeerRequest {
@@ -67,7 +94,7 @@ message PeerStatus {
   Peer peer = 1;
   uint64 txBytes = 2;
   uint64 rxBytes = 3;
-  string exporterEndpoint = 4;
+  string exporterEndpoint = 4 [(validate.rules).string.uri = true];
 }
 
 message UpdatePeerStatusRequest {

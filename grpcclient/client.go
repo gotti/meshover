@@ -11,47 +11,55 @@ import (
 )
 
 type Client struct {
-  OverlayIP net.IP
-	conn     *grpc.ClientConn
-	GrpcConn spec.ControlPlaneServiceClient
+	context   context.Context
+	OverlayIP net.IP
+	conn      *grpc.ClientConn
+	grpcConn  spec.ControlPlaneServiceClient
 }
 
-func NewClient(hostName string, controlserver string, publickey []byte, underlayAddress string) (*Client, error) {
+func NewClient(ctx context.Context, hostName string, controlserver string, publickey *spec.Curve25519Key, underlayAddress *spec.AddressAndPort) (*Client, *spec.ASN, error) {
 	conn, err := grpc.Dial(controlserver, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to controlserver, err=%w", err)
+		return nil, nil, fmt.Errorf("failed to connect to controlserver, err=%w", err)
 	}
 	c := spec.NewControlPlaneServiceClient(conn)
-  ctx := context.Background()
-  adrreq := new(spec.AddressAssignRequest)
-  adrreq.Name = hostName
+	adrreq := new(spec.AddressAssignRequest)
+	adrreq.Name = hostName
 	r, err := c.AddressAssign(ctx, adrreq)
 	if err != nil {
-		return nil, fmt.Errorf("failed to request address assign, err=%w", err)
+		return nil, nil, fmt.Errorf("failed to request address assign, err=%w", err)
 	}
-  overlayIP := net.ParseIP(r.GetAddress().GetEndpointAddress())
+	overlayIP := r.GetAddress().ToNetIP()
 	fmt.Printf("assigned address %s\n", overlayIP)
 	req := new(spec.RegisterPeerRequest)
 	req.Peer = new(spec.Peer)
 	req.Peer.Address = r.GetAddress()
-	req.Peer.Asn = "8888"
+	req.Peer.Asnumber = r.GetAsnumber()
 	req.Peer.Name = hostName
-	wg := new(spec.Peer_UnderlayWireguard)
-	wg.UnderlayWireguard = new(spec.UnderlayWireguard)
-	wg.UnderlayWireguard.Endpoint = new(spec.Address)
-	wg.UnderlayWireguard.Endpoint.EndpointAddress = fmt.Sprintf("[%s]:12912", underlayAddress)
-	wg.UnderlayWireguard.PublicKey = publickey
-	req.Peer.Underlay = wg
+	wg := &spec.UnderlayLinuxKernelWireguard{Endpoint: underlayAddress, PublicKey: publickey}
+	req.Peer.Underlay = &spec.Peer_UnderlayLinuxKernelWireguard{UnderlayLinuxKernelWireguard: wg}
 	res, err := c.RegisterPeer(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to register peer, err=%w", err)
+		return nil, nil, fmt.Errorf("failed to register peer, err=%w", err)
 	}
 	if !res.Ok {
-		return nil, fmt.Errorf("ok is false when registering peer")
+		return nil, nil, fmt.Errorf("ok is false when registering peer")
 	}
-  return &Client{OverlayIP: overlayIP, conn:conn, GrpcConn:  c}, nil
+	return &Client{context: ctx, OverlayIP: overlayIP, conn: conn, grpcConn: c}, r.GetAsnumber(), nil
 }
 
 func (c *Client) Close() error {
 	return c.conn.Close()
+}
+
+func (c *Client) ListPeers() (*spec.ListPeersResponse, error) {
+	req := new(spec.ListPeersRequest)
+	ret, err := c.grpcConn.ListPeers(c.context, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect ListPeers endpont, err=%w", err)
+	}
+	if err := ret.ValidateAll(); err != nil {
+		return nil, fmt.Errorf("validation failed, err=%w", err)
+	}
+	return ret, nil
 }

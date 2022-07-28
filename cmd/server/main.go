@@ -76,13 +76,13 @@ func (c *controlServer) AddPeer(pe *spec.Peer) {
 	c.peers.Peers = append(c.peers.Peers, pe)
 }
 
-func (c *controlServer) FindPeer(name string) *spec.Peer{
+func (c *controlServer) FindPeer(name string) *spec.Peer {
 	for _, p := range c.peers.Peers {
 		if p.GetName() == name {
 			return p
 		}
 	}
-  return nil
+	return nil
 }
 
 func (c *controlServer) ListPeers(ctx context.Context, in *spec.ListPeersRequest) (*spec.ListPeersResponse, error) {
@@ -93,15 +93,11 @@ func (c *controlServer) ListPeers(ctx context.Context, in *spec.ListPeersRequest
 }
 
 func (c *controlServer) AddressAssign(ctx context.Context, in *spec.AddressAssignRequest) (*spec.AddressAssignResponse, error) {
-  p := c.FindPeer(in.GetName())
-  if p != nil {
-    ret := new(spec.AddressAssignResponse)
-    ret.Address = new(spec.Address)
-    fmt.Println("reuse address:", p.GetAddress())
-    ret.Address.EndpointAddress = fmt.Sprintf("%s", p.Address.EndpointAddress)
-    fmt.Println(ret.Address.EndpointAddress)
-    return ret, nil
-  }
+	p := c.FindPeer(in.GetName())
+	if p != nil {
+		ret := &spec.AddressAssignResponse{Address: p.GetAddress(), Asnumber: p.Asnumber}
+		return ret, nil
+	}
 	randomAddr := uint32(rand.Int())
 	i, n, err := net.ParseCIDR(*assignAddressRange)
 	if err != nil {
@@ -115,10 +111,9 @@ func (c *controlServer) AddressAssign(ctx context.Context, in *spec.AddressAssig
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, addr)
 	fmt.Printf("assigned %s\n", ip.String())
-	ret := new(spec.AddressAssignResponse)
-	ret.Address = new(spec.Address)
-	ret.Address.EndpointAddress = fmt.Sprintf("%s", ip.String())
-	return ret, nil
+	randomASN := rand.Intn(94967294) + 4200000000
+	ret := spec.AddressAssignResponse{Address: spec.NewAddress(ip), Asnumber: &spec.ASN{Number: uint32(randomASN)}}
+	return &ret, nil
 }
 
 func (c *controlServer) RegisterPeer(ctx context.Context, in *spec.RegisterPeerRequest) (*spec.RegisterPeerResponse, error) {
@@ -140,27 +135,27 @@ func loadAndSanitizeArgs() {
 	}
 }
 
-type authorizer struct{
-  token string
-  server *controlServer
+type authorizer struct {
+	token  string
+	server *controlServer
 }
 
-func (a *authorizer) Context(ctx context.Context, info *grpc.UnaryServerInfo)  (context.Context, error) {
-  if info.FullMethod == "/ControlPlaneService/AddressAssign"{
-  }
-  _, ok := metadata.FromIncomingContext(ctx)
-  if !ok {
-      return nil, grpc.Errorf(codes.Unauthenticated, "Authorization required: no context metadata")
-  }
-  return ctx, nil
+func (a *authorizer) Context(ctx context.Context, info *grpc.UnaryServerInfo) (context.Context, error) {
+	if info.FullMethod == "/ControlPlaneService/AddressAssign" {
+	}
+	_, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, grpc.Errorf(codes.Unauthenticated, "Authorization required: no context metadata")
+	}
+	return ctx, nil
 }
 
 func (a *authorizer) HandleUnary(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-    ctx, err := a.Context(ctx, info)
-    if err != nil {
-        return nil, err
-    }
-    return handler(ctx, req)
+	ctx, err := a.Context(ctx, info)
+	if err != nil {
+		return nil, err
+	}
+	return handler(ctx, req)
 }
 
 func main() {
@@ -171,10 +166,10 @@ func main() {
 		log.Fatalf("failed to load state, err=%s\n", err)
 	}
 	fmt.Printf("%+v\n", server.peers)
-  //a := authorizer{token: "a", server: &server}
+	//a := authorizer{token: "a", server: &server}
 	s := grpc.NewServer(
-    //grpc.UnaryInterceptor(a.HandleUnary),
-  )
+	//grpc.UnaryInterceptor(a.HandleUnary),
+	)
 	spec.RegisterControlPlaneServiceServer(s, &server)
 	lis, err := net.Listen("tcp", *listenAddress)
 	if err != nil {

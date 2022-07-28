@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
+	_ "embed"
 	"flag"
 	"fmt"
 	"log"
@@ -12,17 +12,25 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gotti/meshover/frr"
 	"github.com/gotti/meshover/grpcclient"
+	"github.com/gotti/meshover/linuxwireguard"
 	"github.com/gotti/meshover/spec"
-	"github.com/gotti/meshover/wireguard"
+	"github.com/gotti/meshover/status"
 	"github.com/vishvananda/netlink"
-	"golang.org/x/crypto/chacha20poly1305"
-	"golang.org/x/crypto/curve25519"
 )
+
+//go:embed embed/daemons
+var frrDaemonsConfig string
+
+//go:embed embed/vtysh.conf
+var frrVtyshConfig string
 
 var (
 	controlserver = flag.String("controlserver", "", "localhost:8080")
 	hostName      = flag.String("hostname", "", "hostname")
+	capabl        = flag.String("cap", "", "wireguard,linuxkernelwireguard")
+	staticRoutes  = flag.String("static", "", "192.168.0.0/16")
 )
 
 func getMachineAddresses() (ret []*net.IPNet, err error) {
@@ -47,51 +55,7 @@ func getMachineAddresses() (ret []*net.IPNet, err error) {
 	return ret, nil
 }
 
-func generateKeyPair() (privatekey, publickey []byte, err error) {
-	if chacha20poly1305.KeySize != curve25519.ScalarSize {
-		return nil, nil, fmt.Errorf("assertion failed, key length of chacha20poly1305 and curve25519 mismatch")
-	}
-	privkey := make([]byte, chacha20poly1305.KeySize)
-	if _, err := rand.Read(privkey); err != nil {
-		return nil, nil, fmt.Errorf("failed to generate private key, err=%w", err)
-	}
-	pubkey, err := curve25519.X25519(privkey, curve25519.Basepoint)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate public key, err=%w", err)
-	}
-	return privkey, pubkey, nil
-}
-
-/*
-func initializeKeyPair() (*spec.KeyPair, error) {
-	const filepath = "meshover.conf"
-	if _, err := os.Stat(filepath); os.IsNotExist(err) {
-		privkey, pubkey, err := generateKeyPair()
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate key pair for authentication, err=%w", err)
-		}
-		k := new(spec.KeyPair)
-		k.PrivateKey = privkey
-		k.PublicKey = pubkey
-		b, err := proto.Marshal(k)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal keypair, err=%w", err)
-		}
-		os.WriteFile(filepath, b, 0700)
-	}
-	b, err := os.ReadFile(filepath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read keypair, err=%w", err)
-	}
-	k := new(spec.KeyPair)
-	if err := proto.Unmarshal(b, k); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal keypair, err=%w", err)
-	}
-	return k, nil
-}*/
-
-func main() {
-	flag.Parse()
+func parseArgs() {
 	if *hostName == "" {
 		h, err := os.Hostname()
 		if err != nil {
@@ -99,29 +63,48 @@ func main() {
 		}
 		hostName = &h
 	}
+}
+
+func readConfig(confPath string) string {
+	b, err := os.ReadFile(confPath)
+	if err != nil {
+		log.Fatalln("failed to read config")
+	}
+	return string(b)
+}
+
+func main() {
+	flag.Parse()
+	parseArgs()
 	if *controlserver == "" {
 		log.Fatalln("controlserver is not specified")
 	}
+	p := &spec.Peers{}
+	stat := status.NewClient(*hostName, "meshover0", p)
 
-	privkey, pubkey, err := generateKeyPair()
-	if err != nil {
-		log.Fatalf("failed to generate keypair, err=%s\n", err)
-	}
-	fmt.Printf("pubkey: %x\n", pubkey)
-
-	tunnel := wireguard.NewTunnel("exp-wireguard", privkey, pubkey, *hostName)
-	defer tunnel.Close()
-
+	tunnel := linuxwireguard.NewTunnel(stat)
+	defer func() {
+		err := tunnel.Close()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
 	addrs, err := getMachineAddresses()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	client, err := grpcclient.NewClient(*hostName, *controlserver, pubkey, addrs[0].IP.String())
+
+	ctx := context.Background()
+	client, asn, err := grpcclient.NewClient(ctx, *hostName, *controlserver, tunnel.GetPublicKey(), &spec.AddressAndPort{Ipaddress: spec.NewAddress(addrs[0].IP), Port: 12912})
 	defer client.Close()
 	if err != nil {
 		log.Fatalln(err)
 	}
-  tunnel.SetAddress(client.OverlayIP)
+
+	tunnel.SetAddressWithoutTouchingLinuxNetwork(client.OverlayIP)
+	tunnel.SetListenPort(12912)
+	stat.IPAddr = net.IPNet{IP: client.OverlayIP, Mask: net.IPv4Mask(255, 255, 255, 255)}
+	stat.ASN = asn
 
 	term := make(chan os.Signal, 1)
 	signal.Notify(term, syscall.SIGTERM)
@@ -130,24 +113,52 @@ func main() {
 	ticker := time.NewTicker(10 * time.Second)
 	watchctx, watchcancel := context.WithCancel(context.Background())
 	defer watchcancel()
+
+	c := make(chan []status.PeerDiffrence)
+
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				req := new(spec.ListPeersRequest)
-				res, err := client.GrpcConn.ListPeers(watchctx, req)
+				res, err := client.ListPeers()
 				if err != nil {
 					log.Printf("failed to ListPeers err=%s", err)
 				}
-				ps := res.GetPeers()
-				tunnel.SetPeers(ps)
+				pe := res.GetPeers()
+				diff, err := stat.UpdatePeers(status.NewPeers(pe))
+				if err != nil {
+					log.Println(err)
+				}
+				if len(diff) > 0 {
+					fmt.Println("updating...", diff)
+					tunnel.UpdatePeers(diff)
+					c <- diff
+				}
 			case <-watchctx.Done():
 				return
 			}
 		}
 	}()
+	f, err := frr.NewInstance(asn, *hostName, client.OverlayIP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
+	if err != nil {
+		log.Fatalln("failed to create frr instance", err)
+	}
+	go func() {
+		if f.Up(ctx); err != nil {
+			log.Fatalln("failed to up frr instance", err)
+		}
+	}()
+	go func() {
+		for {
+			select {
+			case p := <-c:
+				if err := f.UpdatePeers(ctx, p); err != nil {
+					log.Fatalln("failed to update AS peer", err)
+				}
+			}
+		}
+	}()
 	select {
 	case <-term:
-	case <-tunnel.Dev.Wait():
 	}
 }
