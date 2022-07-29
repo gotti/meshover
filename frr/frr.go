@@ -15,7 +15,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/gotti/meshover/spec"
-	"github.com/gotti/meshover/status"
 )
 
 type FrrConfig struct {
@@ -56,13 +55,13 @@ func NewInstance(asn *spec.ASN, hostName string, overlayIP string, bgpdTemplate 
 	return &FrrInstance{asn: asn, frrConfig: FrrConfig{hostname: hostName, overlayIP: overlayIP, bgpdTemplate: bgpdTemplate, daemonConfig: daemons, vtyshConfig: vtysh}, configDir: d}, nil
 }
 
-func (f *FrrInstance) newFrrPeerConfig(p []status.PeerDiffrence) *frrPeerConfig {
+func (f *FrrInstance) newFrrPeerConfig(p *spec.Peers) *frrPeerConfig {
 	fc := new(frrPeerConfig)
 	fc.ASN = fmt.Sprintf("%d", f.asn.GetNumber())
 	fc.HostName = f.frrConfig.hostname
 	fc.IPAddr = f.frrConfig.overlayIP
-	for _, pp := range p {
-		fc.Peers = append(fc.Peers, FrrConfigPeer{Add: pp.Add, IPAddr: pp.Peer.GetAddress().GetIpaddress(), ASN: fmt.Sprintf("%d", pp.Peer.GetAsnumber().GetNumber())})
+	for _, pp := range p.GetPeers() {
+		fc.Peers = append(fc.Peers, FrrConfigPeer{Add: true, IPAddr: pp.GetAddress().GetIpaddress(), ASN: fmt.Sprintf("%d", pp.GetAsnumber().GetNumber())})
 	}
 	return fc
 }
@@ -84,7 +83,7 @@ func (f *FrrInstance) execCommand(ctx context.Context, command []string) error {
 	return nil
 }
 
-func (f *FrrInstance) UpdatePeers(ctx context.Context, peerDiff []status.PeerDiffrence) error {
+func (f *FrrInstance) UpdatePeers(ctx context.Context, peer *spec.Peers) error {
 	tmpl, err := template.New("frr").Parse(f.frrConfig.bgpdTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to parse template, err=%w", err)
@@ -93,7 +92,7 @@ func (f *FrrInstance) UpdatePeers(ctx context.Context, peerDiff []status.PeerDif
 	if err != nil {
 		return fmt.Errorf("failed to create bgpd.conf, err=%w", err)
 	}
-	cfg := f.newFrrPeerConfig(peerDiff)
+	cfg := f.newFrrPeerConfig(peer)
 	if err := tmpl.Execute(fb, cfg); err != nil {
 		return fmt.Errorf("failed to execute template, err=%w", err)
 	}
@@ -132,6 +131,12 @@ func (f *FrrInstance) Up(ctx context.Context) error {
 		return fmt.Errorf("failed to create daemons config file")
 	}
 	fd.Write([]byte(f.frrConfig.daemonConfig))
+
+	fv, err := os.Create(filepath.Join(f.configDir, "vtysh.conf"))
+	if err != nil {
+		return fmt.Errorf("failed to create daemons config file")
+	}
+	fv.Write([]byte(f.frrConfig.vtyshConfig))
 
 	resp, err := f.client.ContainerCreate(ctx, &container.Config{
 		Image: "frrouting/frr:v8.3.0",

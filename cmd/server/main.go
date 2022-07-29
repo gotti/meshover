@@ -95,6 +95,7 @@ func (c *controlServer) ListPeers(ctx context.Context, in *spec.ListPeersRequest
 func (c *controlServer) AddressAssign(ctx context.Context, in *spec.AddressAssignRequest) (*spec.AddressAssignResponse, error) {
 	p := c.FindPeer(in.GetName())
 	if p != nil {
+		fmt.Println("found ")
 		ret := &spec.AddressAssignResponse{Address: p.GetAddress(), Asnumber: p.Asnumber}
 		return ret, nil
 	}
@@ -119,7 +120,7 @@ func (c *controlServer) AddressAssign(ctx context.Context, in *spec.AddressAssig
 func (c *controlServer) RegisterPeer(ctx context.Context, in *spec.RegisterPeerRequest) (*spec.RegisterPeerResponse, error) {
 	p := in.GetPeer()
 	c.AddPeer(p)
-	fmt.Printf("%+v", c.peers)
+	fmt.Printf("%+v\n", c.peers)
 	if err := c.SaveState(); err != nil {
 		log.Fatalf("failed to save, %s", err)
 	}

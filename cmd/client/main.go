@@ -39,7 +39,7 @@ func getMachineAddresses() (ret []*net.IPNet, err error) {
 		log.Fatalf("%s\n", err)
 	}
 	for _, l := range links {
-		if l.Type() != "device" {
+		if l.Type() != "device" && l.Type() != "vlan" {
 			continue
 		}
 		addr, err := netlink.AddrList(l, syscall.AF_INET6)
@@ -114,7 +114,7 @@ func main() {
 	watchctx, watchcancel := context.WithCancel(context.Background())
 	defer watchcancel()
 
-	c := make(chan []status.PeerDiffrence)
+	c := make(chan *spec.Peers)
 
 	go func() {
 		for {
@@ -132,7 +132,7 @@ func main() {
 				if len(diff) > 0 {
 					fmt.Println("updating...", diff)
 					tunnel.UpdatePeers(diff)
-					c <- diff
+					c <- pe
 				}
 			case <-watchctx.Done():
 				return
