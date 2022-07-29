@@ -94,3 +94,8 @@ func (c *ClientStatus) GetPeers() *spec.Peers {
 	defer c.Peers.mtx.Unlock()
 	return c.Peers.peers
 }
+
+type FrrPeer struct {
+	TunName string
+	*spec.Peer
+}

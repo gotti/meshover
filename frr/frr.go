@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/gotti/meshover/spec"
+	"github.com/gotti/meshover/status"
 )
 
 type FrrConfig struct {
@@ -43,6 +44,7 @@ type frrPeerConfig struct {
 type FrrConfigPeer struct {
 	Add    bool
 	IPAddr string
+	IFName string
 	ASN    string
 }
 
@@ -55,13 +57,13 @@ func NewInstance(asn *spec.ASN, hostName string, overlayIP string, bgpdTemplate 
 	return &FrrInstance{asn: asn, frrConfig: FrrConfig{hostname: hostName, overlayIP: overlayIP, bgpdTemplate: bgpdTemplate, daemonConfig: daemons, vtyshConfig: vtysh}, configDir: d}, nil
 }
 
-func (f *FrrInstance) newFrrPeerConfig(p *spec.Peers) *frrPeerConfig {
+func (f *FrrInstance) newFrrPeerConfig(p []status.FrrPeer) *frrPeerConfig {
 	fc := new(frrPeerConfig)
 	fc.ASN = fmt.Sprintf("%d", f.asn.GetNumber())
 	fc.HostName = f.frrConfig.hostname
 	fc.IPAddr = f.frrConfig.overlayIP
-	for _, pp := range p.GetPeers() {
-		fc.Peers = append(fc.Peers, FrrConfigPeer{Add: true, IPAddr: pp.GetAddress().GetIpaddress(), ASN: fmt.Sprintf("%d", pp.GetAsnumber().GetNumber())})
+	for _, pp := range p {
+		fc.Peers = append(fc.Peers, FrrConfigPeer{Add: true, IPAddr: pp.GetAddress().GetIpaddress(), ASN: fmt.Sprintf("%d", pp.GetAsnumber().GetNumber()), IFName: pp.TunName})
 	}
 	return fc
 }
@@ -83,7 +85,7 @@ func (f *FrrInstance) execCommand(ctx context.Context, command []string) error {
 	return nil
 }
 
-func (f *FrrInstance) UpdatePeers(ctx context.Context, peer *spec.Peers) error {
+func (f *FrrInstance) UpdatePeers(ctx context.Context, peer []status.FrrPeer) error {
 	tmpl, err := template.New("frr").Parse(f.frrConfig.bgpdTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to parse template, err=%w", err)

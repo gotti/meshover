@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gotti/meshover/frr"
+	"github.com/gotti/meshover/gre"
 	"github.com/gotti/meshover/grpcclient"
 	"github.com/gotti/meshover/linuxwireguard"
 	"github.com/gotti/meshover/spec"
@@ -114,7 +115,10 @@ func main() {
 	watchctx, watchcancel := context.WithCancel(context.Background())
 	defer watchcancel()
 
-	c := make(chan *spec.Peers)
+	c := make(chan []status.FrrPeer)
+
+	greInstance := gre.NewGreInstance(stat.IPAddr.IP)
+	defer greInstance.Clean()
 
 	go func() {
 		for {
@@ -132,7 +136,13 @@ func main() {
 				if len(diff) > 0 {
 					fmt.Println("updating...", diff)
 					tunnel.UpdatePeers(diff)
-					c <- pe
+					greInstance.UpdatePeers(diff)
+					frrpeers := []status.FrrPeer{}
+					for _, p := range pe.GetPeers() {
+						fp := status.FrrPeer{Peer: p, TunName: greInstance.FindTunNameByOppositeIP(p.GetAddress().ToNetIP())}
+						frrpeers = append(frrpeers, fp)
+					}
+					c <- frrpeers
 				}
 			case <-watchctx.Done():
 				return
