@@ -2,7 +2,7 @@
 
 貧者のIP ClosもどきDCを構築するためのツール。
 
-IPv6を使ってWireguardでフルメッシュVPNを構成する。tailscaleのようなもので、違いはBGPでルーティングか可能なこと。
+IPv6を使ってWireguardでフルメッシュVPNを構成する。tailscaleやcalicoと似たツール。
 
 特徴
 - 自動構成IPアドレス
