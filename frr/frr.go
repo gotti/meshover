@@ -26,7 +26,12 @@ type FrrConfig struct {
 	vtyshConfig  string
 }
 
+func NewFrrConfig(hostName string, overlayIP string, bgpdTemplate string, daemonConfig string, vtyshConfig string) FrrConfig {
+	return FrrConfig{hostname: hostName, overlayIP: overlayIP, bgpdTemplate: bgpdTemplate, daemonConfig: daemonConfig, vtyshConfig: vtyshConfig}
+}
+
 type FrrInstance struct {
+	ctx         context.Context
 	frrConfig   FrrConfig
 	asn         *spec.ASN
 	configDir   string
@@ -48,13 +53,21 @@ type FrrConfigPeer struct {
 	ASN    string
 }
 
-func NewInstance(asn *spec.ASN, hostName string, overlayIP string, bgpdTemplate string, daemons string, vtysh string) (*FrrInstance, error) {
+func NewInstance(ctx context.Context, asn *spec.ASN, config FrrConfig) (*FrrInstance, error) {
 	d, err := ioutil.TempDir(os.TempDir(), "meshover-frr")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create tempdir, err=%w", err)
 	}
 
-	return &FrrInstance{asn: asn, frrConfig: FrrConfig{hostname: hostName, overlayIP: overlayIP, bgpdTemplate: bgpdTemplate, daemonConfig: daemons, vtyshConfig: vtysh}, configDir: d}, nil
+	return &FrrInstance{ctx: ctx, asn: asn, frrConfig: config, configDir: d}, nil
+}
+
+func (f *FrrInstance) Clean() error {
+	err := f.client.ContainerKill(f.ctx, f.containerID, "SIGKILL")
+	if err != nil {
+		return fmt.Errorf("failed to clean frr container, err=%w", err)
+	}
+	return nil
 }
 
 func (f *FrrInstance) newFrrPeerConfig(p []status.FrrPeer) *frrPeerConfig {

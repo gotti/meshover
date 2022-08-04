@@ -149,10 +149,17 @@ func main() {
 			}
 		}
 	}()
-	f, err := frr.NewInstance(asn, *hostName, client.OverlayIP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
+	conf := frr.NewFrrConfig(*hostName, client.OverlayIP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
+	f, err := frr.NewInstance(ctx, asn, conf)
 	if err != nil {
 		log.Fatalln("failed to create frr instance", err)
 	}
+	defer func() {
+		err := f.Clean()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}()
 	go func() {
 		if f.Up(ctx); err != nil {
 			log.Fatalln("failed to up frr instance", err)
