@@ -9,6 +9,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type FrrPeerDiffrence struct {
+	TunName string
+	PeerDiffrence
+}
+
 type PeerDiffrence struct {
 	Add  bool
 	Peer *spec.Peer
@@ -93,9 +98,4 @@ func (c *ClientStatus) GetPeers() *spec.Peers {
 	c.Peers.mtx.Lock()
 	defer c.Peers.mtx.Unlock()
 	return c.Peers.peers
-}
-
-type FrrPeer struct {
-	TunName string
-	*spec.Peer
 }

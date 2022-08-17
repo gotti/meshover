@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
-	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -18,7 +17,7 @@ import (
 	"github.com/gotti/meshover/status"
 )
 
-type FrrConfig struct {
+type FrrInstanceConfig struct {
 	hostname     string
 	overlayIP    string
 	bgpdTemplate string
@@ -26,13 +25,13 @@ type FrrConfig struct {
 	vtyshConfig  string
 }
 
-func NewFrrConfig(hostName string, overlayIP string, bgpdTemplate string, daemonConfig string, vtyshConfig string) FrrConfig {
-	return FrrConfig{hostname: hostName, overlayIP: overlayIP, bgpdTemplate: bgpdTemplate, daemonConfig: daemonConfig, vtyshConfig: vtyshConfig}
+func NewFrrConfig(hostName string, overlayIP string, bgpdTemplate string, daemonConfig string, vtyshConfig string) FrrInstanceConfig {
+	return FrrInstanceConfig{hostname: hostName, overlayIP: overlayIP, bgpdTemplate: bgpdTemplate, daemonConfig: daemonConfig, vtyshConfig: vtyshConfig}
 }
 
 type FrrInstance struct {
 	ctx         context.Context
-	frrConfig   FrrConfig
+	frrConfig   FrrInstanceConfig
 	asn         *spec.ASN
 	configDir   string
 	containerID string
@@ -53,7 +52,7 @@ type FrrConfigPeer struct {
 	ASN    string
 }
 
-func NewInstance(ctx context.Context, asn *spec.ASN, config FrrConfig) (*FrrInstance, error) {
+func NewInstance(ctx context.Context, asn *spec.ASN, config FrrInstanceConfig) (*FrrInstance, error) {
 	d, err := ioutil.TempDir(os.TempDir(), "meshover-frr")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create tempdir, err=%w", err)
@@ -70,13 +69,13 @@ func (f *FrrInstance) Clean() error {
 	return nil
 }
 
-func (f *FrrInstance) newFrrPeerConfig(p []status.FrrPeer) *frrPeerConfig {
+func (f *FrrInstance) newFrrPeerConfig(p []status.FrrPeerDiffrence) *frrPeerConfig {
 	fc := new(frrPeerConfig)
 	fc.ASN = fmt.Sprintf("%d", f.asn.GetNumber())
 	fc.HostName = f.frrConfig.hostname
 	fc.IPAddr = f.frrConfig.overlayIP
 	for _, pp := range p {
-		fc.Peers = append(fc.Peers, FrrConfigPeer{Add: true, IPAddr: pp.GetAddress().GetIpaddress(), ASN: fmt.Sprintf("%d", pp.GetAsnumber().GetNumber()), IFName: pp.TunName})
+		fc.Peers = append(fc.Peers, FrrConfigPeer{Add: true, IPAddr: pp.Peer.GetAddress().GetIpaddress(), ASN: fmt.Sprintf("%d", pp.Peer.GetAsnumber().GetNumber()), IFName: pp.TunName})
 	}
 	return fc
 }
@@ -98,7 +97,7 @@ func (f *FrrInstance) execCommand(ctx context.Context, command []string) error {
 	return nil
 }
 
-func (f *FrrInstance) UpdatePeers(ctx context.Context, peer []status.FrrPeer) error {
+func (f *FrrInstance) UpdatePeers(ctx context.Context, peer []status.FrrPeerDiffrence) error {
 	tmpl, err := template.New("frr").Parse(f.frrConfig.bgpdTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to parse template, err=%w", err)
@@ -134,12 +133,11 @@ func (f *FrrInstance) Up(ctx context.Context) error {
 		return fmt.Errorf("failed to image pull, err=%w", err)
 	}
 	io.Copy(os.Stdout, reader)
+	defer reader.Close()
 
 	if err := f.client.ContainerKill(ctx, "meshover0-frr", "SIGTERM"); err != nil {
 		log.Println("failed to kill container", err)
 	}
-
-	time.Sleep(5 * time.Second)
 
 	fd, err := os.Create(filepath.Join(f.configDir, "daemons"))
 	if err != nil {

@@ -50,6 +50,15 @@ message ASN {
   uint32 number = 1;
 }
 
+message AddressCIDR {
+  Address ipaddress = 1;
+  int32 mask = 2 [(validate.rules).int32 = {gte: 0, lte:32}];
+}
+
+message SourceBasedRoutingOption {
+  repeated AddressCIDR sourceIPRange = 1;
+}
+
 message Peer {
   string name = 1;
   ASN asnumber = 2;
@@ -60,6 +69,7 @@ message Peer {
     UnderlayWireguard underlayWireguard = 6;
     UnderlayLinuxKernelWireguard underlayLinuxKernelWireguard = 7;
   }
+  SourceBasedRoutingOption sbrOption = 8;
 }
 
 message Peers {

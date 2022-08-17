@@ -182,25 +182,11 @@ func (t *WireguardTunnel) SetAddress(address net.IP) {
 	if err != nil {
 		log.Fatalln("parseaddr", err)
 	}
-	t.selfIP = address
 	netlink.AddrAdd(t.link, addr)
+	t.selfIP = address
 	netlink.LinkSetUp(t.link)
 }
 
 func (t *WireguardTunnel) SetAddressWithoutTouchingLinuxNetwork(address net.IP) {
-	addr, err := netlink.ParseAddr(fmt.Sprintf("%s/32", address.String()))
-	if err != nil {
-		log.Fatalln("parseaddr", err)
-	}
-	netlink.AddrAdd(t.link, addr)
 	t.selfIP = address
-	//https://github.com/FRRouting/frr/issues/9544
-	//add link local address
-	linklocal, err := netlink.ParseAddr(fmt.Sprintf("%s/64", generateLinkLocalV6(address).String()))
-	if err != nil {
-		log.Fatalln("failed to parse link local, err", err)
-	}
-	linklocal.Scope = int(netlink.SCOPE_LINK)
-	netlink.AddrAdd(t.link, linklocal)
-	netlink.LinkSetUp(t.link)
 }

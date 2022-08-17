@@ -55,14 +55,25 @@ func (g *GreStatus) addTunnelPeer(p *status.PeerDiffrence) error {
 	}
 	gt := &GreTunnel{TunName: tun, link: gretun, peerName: p.Peer.GetName(), OppositeIP: p.Peer.GetAddress().ToNetIP()}
 	g.tunnels = append(g.tunnels, gt)
+	fmt.Println("tunnels")
+	for _, t := range g.tunnels {
+		fmt.Printf("%+v", t)
+	}
 	g.counter++
 	return nil
 }
 
-func (g *GreStatus) Clean() {
-	for _, p := range g.tunnels {
-		if err := netlink.LinkDel(p.link); err != nil {
-			log.Fatalln("failed to clean up, err deleting", err)
+func Clean() {
+	links, err := netlink.LinkList()
+	if err != nil {
+		log.Fatalln("failed to delete gre peer", err)
+	}
+	for _, l := range links {
+		if strings.HasPrefix(l.Attrs().Name, "meshover0-tun") {
+			err := netlink.LinkDel(l)
+			if err != nil {
+				log.Fatalln(err)
+			}
 		}
 	}
 }
@@ -101,7 +112,7 @@ func (g *GreStatus) UpdatePeers(peersDiff []status.PeerDiffrence) {
 
 func (g *GreStatus) FindTunNameByOppositeIP(opossiteIP net.IP) (tunName string) {
 	for _, p := range g.tunnels {
-		if p.OppositeIP.Equal(p.OppositeIP) {
+		if p.OppositeIP.Equal(opossiteIP) {
 			return p.TunName
 		}
 	}

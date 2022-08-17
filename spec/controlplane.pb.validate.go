@@ -1236,6 +1236,281 @@ var _ interface {
 	ErrorName() string
 } = ASNValidationError{}
 
+// Validate checks the field values on AddressCIDR with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *AddressCIDR) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AddressCIDR with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in AddressCIDRMultiError, or
+// nil if none found.
+func (m *AddressCIDR) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AddressCIDR) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetIpaddress()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AddressCIDRValidationError{
+					field:  "Ipaddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AddressCIDRValidationError{
+					field:  "Ipaddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetIpaddress()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AddressCIDRValidationError{
+				field:  "Ipaddress",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if val := m.GetMask(); val < 0 || val > 32 {
+		err := AddressCIDRValidationError{
+			field:  "Mask",
+			reason: "value must be inside range [0, 32]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return AddressCIDRMultiError(errors)
+	}
+
+	return nil
+}
+
+// AddressCIDRMultiError is an error wrapping multiple validation errors
+// returned by AddressCIDR.ValidateAll() if the designated constraints aren't met.
+type AddressCIDRMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AddressCIDRMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AddressCIDRMultiError) AllErrors() []error { return m }
+
+// AddressCIDRValidationError is the validation error returned by
+// AddressCIDR.Validate if the designated constraints aren't met.
+type AddressCIDRValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AddressCIDRValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AddressCIDRValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AddressCIDRValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AddressCIDRValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AddressCIDRValidationError) ErrorName() string { return "AddressCIDRValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AddressCIDRValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAddressCIDR.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AddressCIDRValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AddressCIDRValidationError{}
+
+// Validate checks the field values on SourceBasedRoutingOption with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SourceBasedRoutingOption) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SourceBasedRoutingOption with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SourceBasedRoutingOptionMultiError, or nil if none found.
+func (m *SourceBasedRoutingOption) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SourceBasedRoutingOption) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetSourceIPRange() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SourceBasedRoutingOptionValidationError{
+						field:  fmt.Sprintf("SourceIPRange[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SourceBasedRoutingOptionValidationError{
+						field:  fmt.Sprintf("SourceIPRange[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SourceBasedRoutingOptionValidationError{
+					field:  fmt.Sprintf("SourceIPRange[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return SourceBasedRoutingOptionMultiError(errors)
+	}
+
+	return nil
+}
+
+// SourceBasedRoutingOptionMultiError is an error wrapping multiple validation
+// errors returned by SourceBasedRoutingOption.ValidateAll() if the designated
+// constraints aren't met.
+type SourceBasedRoutingOptionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SourceBasedRoutingOptionMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SourceBasedRoutingOptionMultiError) AllErrors() []error { return m }
+
+// SourceBasedRoutingOptionValidationError is the validation error returned by
+// SourceBasedRoutingOption.Validate if the designated constraints aren't met.
+type SourceBasedRoutingOptionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SourceBasedRoutingOptionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SourceBasedRoutingOptionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SourceBasedRoutingOptionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SourceBasedRoutingOptionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SourceBasedRoutingOptionValidationError) ErrorName() string {
+	return "SourceBasedRoutingOptionValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SourceBasedRoutingOptionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSourceBasedRoutingOption.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SourceBasedRoutingOptionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SourceBasedRoutingOptionValidationError{}
+
 // Validate checks the field values on Peer with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error
 // encountered is returned, or nil if there are no violations.
@@ -1311,6 +1586,35 @@ func (m *Peer) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return PeerValidationError{
 				field:  "Address",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetSbrOption()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PeerValidationError{
+					field:  "SbrOption",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PeerValidationError{
+					field:  "SbrOption",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSbrOption()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PeerValidationError{
+				field:  "SbrOption",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
