@@ -1,0 +1,23 @@
+name: build and push
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # skip if is it pushed by fluxcd
+    if: ${{ !contains(github.event.commits.*.author.name, 'fluxcd') }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Setup Go
+        uses: actions/setup-go@v3
+      -
+        name: build
+        run: |
+          go build -o client ./cmd/client/main.go
+          go build -o server ./cmd/server/main.go

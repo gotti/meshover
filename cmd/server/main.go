@@ -1,27 +1,30 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"log"
-	"math/rand"
 	"net"
 	"os"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/gotti/meshover/spec"
+	"github.com/gotti/meshover/utils/ip"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
 var (
 	listenAddress      = flag.String("listen", "", "example: 0.0.0.0:8080")
 	stateFilePath      = flag.String("statefile", "state", "filename")
-	assignAddressRange = flag.String("assignaddress", "10.128.0.0/12", "cidr ipaddress")
+	assignAddressRange = flag.String("assignaddress", "10.128.0.0/12,fd00:beef:beef::/48", "cidr ipaddress")
 )
 
 type controlServer struct {
@@ -85,6 +88,17 @@ func (c *controlServer) FindPeer(name string) *spec.Peer {
 	return nil
 }
 
+func (c *controlServer) FindByIPNet(n net.IPNet) *spec.Peer {
+	for _, p := range c.peers.Peers {
+		for _, a := range p.GetAddress() {
+			if a.ToNetIPNet().IP.Equal(n.IP) && bytes.Compare(a.ToNetIPNet().Mask, n.Mask) == 0 {
+				return p
+			}
+		}
+	}
+	return nil
+}
+
 func (c *controlServer) ListPeers(ctx context.Context, in *spec.ListPeersRequest) (*spec.ListPeersResponse, error) {
 	ret := new(spec.ListPeersResponse)
 	ret.Peers = c.peers
@@ -99,21 +113,16 @@ func (c *controlServer) AddressAssign(ctx context.Context, in *spec.AddressAssig
 		ret := &spec.AddressAssignResponse{Address: p.GetAddress(), Asnumber: p.Asnumber}
 		return ret, nil
 	}
-	randomAddr := uint32(rand.Int())
-	i, n, err := net.ParseCIDR(*assignAddressRange)
-	if err != nil {
-		return nil, err
+	addresses := []*spec.AddressCIDR{}
+	for _, a := range strings.Split(*assignAddressRange, ",") {
+		i, err := ip.GenerateRandomIP(a)
+		if err != nil {
+			log.Println("failed to generate ip, err=", err)
+			return nil, status.Error(codes.Aborted, "failed to generate ip")
+		}
+		addresses = append(addresses, spec.NewAddressCIDR(*i))
 	}
-	m, b := n.Mask.Size()
-	if b != 32 {
-		log.Fatalln("unknown size")
-	}
-	addr := (randomAddr & ((1 << (32 - m)) - 1)) + binary.BigEndian.Uint32(i.Mask(n.Mask))
-	ip := make(net.IP, 4)
-	binary.BigEndian.PutUint32(ip, addr)
-	fmt.Printf("assigned %s\n", ip.String())
-	randomASN := rand.Intn(94967294) + 4200000000
-	ret := spec.AddressAssignResponse{Address: spec.NewAddress(ip), Asnumber: &spec.ASN{Number: uint32(randomASN)}}
+	ret := spec.AddressAssignResponse{Address: addresses, Asnumber: &spec.ASN{Number: ip.GenerateRandomASN()}}
 	return &ret, nil
 }
 
@@ -131,8 +140,10 @@ func (c *controlServer) RegisterPeer(ctx context.Context, in *spec.RegisterPeerR
 
 func loadAndSanitizeArgs() {
 	flag.Parse()
-	if _, _, err := net.ParseCIDR(*assignAddressRange); err != nil {
-		log.Fatalf("unrecognized assignAddressRange, err=%s", err)
+	for _, s := range strings.Split(*assignAddressRange, ",") {
+		if _, _, err := net.ParseCIDR(s); err != nil {
+			log.Fatalf("unrecognized assignAddressRange, err=%s", err)
+		}
 	}
 }
 
@@ -160,6 +171,7 @@ func (a *authorizer) HandleUnary(ctx context.Context, req interface{}, info *grp
 }
 
 func main() {
+	ip.SetSeed(time.Now().UnixNano())
 	loadAndSanitizeArgs()
 	server := controlServer{}
 	server.stateFilePath = *stateFilePath

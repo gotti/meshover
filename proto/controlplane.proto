@@ -10,8 +10,37 @@ service ControlPlaneService {
   rpc UpdatePeerStatus(UpdatePeerStatusRequest) returns (UpdatePeerStatusResponse);
 }
 
+message AddressIPv4{
+  string ipaddress = 1 [(validate.rules).string.ipv4 = true];
+}
+message AddressIPv6{
+  string ipaddress = 1 [(validate.rules).string.ipv6 = true];
+}
+
 message Address {
-  string ipaddress = 1 [(validate.rules).string.ip = true];
+  oneof ipaddress {
+    option (validate.required) = true;
+    AddressIPv4 addressIPv4 = 2;
+    AddressIPv6 addressIPv6 = 3;
+  }
+}
+
+message AddressCIDRIPv4 {
+  AddressIPv4 ipaddress = 1 [(validate.rules).message.required = true];
+  int32 mask = 2 [(validate.rules).int32 = {gte: 0, lte:32}];
+}
+
+message AddressCIDRIPv6 {
+  AddressIPv6 ipaddress = 1 [(validate.rules).message.required = true];
+  int32 mask = 2 [(validate.rules).int32 = {gte: 0, lte:128}];
+}
+
+message AddressCIDR {
+  oneof addresscidr {
+    option (validate.required) = true;
+    AddressCIDRIPv4 addressCIDRIPv4 = 2;
+    AddressCIDRIPv6 addressCIDRIPv6 = 3;
+  }
 }
 
 message AddressAndPort {
@@ -20,11 +49,11 @@ message AddressAndPort {
 }
 
 message UnderlayUnknown {
-  Address endpoint = 1;
+  Address endpoint = 1 [(validate.rules).message.required = true];
 }
 
 message UnderlayTailscale {
-  Address endpoint = 1;
+  Address endpoint = 1 [(validate.rules).message.required = true];
 }
 
 message Curve25519Key {
@@ -32,27 +61,22 @@ message Curve25519Key {
 }
 
 message Curve25519KeyPair {
-  Curve25519Key publickey = 1;
-  Curve25519Key privatekey = 2;
+  Curve25519Key publickey = 1 [(validate.rules).message.required = true];
+  Curve25519Key privatekey = 2 [(validate.rules).message.required = true];
 }
 
 message UnderlayWireguard {
-  AddressAndPort endpoint = 1;
-  Curve25519Key publicKey = 2;
+  AddressAndPort endpoint = 1 [(validate.rules).message.required = true];
+  Curve25519Key publicKey = 2 [(validate.rules).message.required = true];
 }
 
 message UnderlayLinuxKernelWireguard {
-  AddressAndPort endpoint = 1;
-  Curve25519Key publicKey = 2;
+  AddressAndPort endpoint = 1 [(validate.rules).message.required = true];
+  Curve25519Key publicKey = 2 [(validate.rules).message.required = true];
 }
 
 message ASN {
   uint32 number = 1;
-}
-
-message AddressCIDR {
-  Address ipaddress = 1;
-  int32 mask = 2 [(validate.rules).int32 = {gte: 0, lte:32}];
 }
 
 message SourceBasedRoutingOption {
@@ -61,9 +85,10 @@ message SourceBasedRoutingOption {
 
 message Peer {
   string name = 1;
-  ASN asnumber = 2;
-  Address address = 3;
+  ASN asnumber = 2 [(validate.rules).message.required = true];
+  repeated AddressCIDR address = 3;
   oneof underlay {
+    option (validate.required) = true;
     UnderlayUnknown underlayUnknown = 4;
     UnderlayTailscale underlayTailscale = 5;
     UnderlayWireguard underlayWireguard = 6;
@@ -88,12 +113,12 @@ message AddressAssignRequest {
 }
 
 message AddressAssignResponse {
-  Address address = 1;
-  ASN asnumber = 2;
+  repeated AddressCIDR address = 1 [(validate.rules).repeated.min_items = 1];
+  ASN asnumber = 2 [(validate.rules).message.required = true];
 }
 
 message RegisterPeerRequest {
-  Peer peer = 1;
+  Peer peer = 1 [(validate.rules).message.required = true];
 }
 
 message RegisterPeerResponse {
@@ -101,7 +126,7 @@ message RegisterPeerResponse {
 }
 
 message PeerStatus {
-  Peer peer = 1;
+  Peer peer = 1 [(validate.rules).message.required = true];
   uint64 txBytes = 2;
   uint64 rxBytes = 3;
   string exporterEndpoint = 4 [(validate.rules).string.uri = true];

@@ -35,6 +35,226 @@ var (
 	_ = sort.Sort
 )
 
+// Validate checks the field values on AddressIPv4 with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *AddressIPv4) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AddressIPv4 with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in AddressIPv4MultiError, or
+// nil if none found.
+func (m *AddressIPv4) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AddressIPv4) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if ip := net.ParseIP(m.GetIpaddress()); ip == nil || ip.To4() == nil {
+		err := AddressIPv4ValidationError{
+			field:  "Ipaddress",
+			reason: "value must be a valid IPv4 address",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return AddressIPv4MultiError(errors)
+	}
+
+	return nil
+}
+
+// AddressIPv4MultiError is an error wrapping multiple validation errors
+// returned by AddressIPv4.ValidateAll() if the designated constraints aren't met.
+type AddressIPv4MultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AddressIPv4MultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AddressIPv4MultiError) AllErrors() []error { return m }
+
+// AddressIPv4ValidationError is the validation error returned by
+// AddressIPv4.Validate if the designated constraints aren't met.
+type AddressIPv4ValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AddressIPv4ValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AddressIPv4ValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AddressIPv4ValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AddressIPv4ValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AddressIPv4ValidationError) ErrorName() string { return "AddressIPv4ValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AddressIPv4ValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAddressIPv4.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AddressIPv4ValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AddressIPv4ValidationError{}
+
+// Validate checks the field values on AddressIPv6 with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *AddressIPv6) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AddressIPv6 with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in AddressIPv6MultiError, or
+// nil if none found.
+func (m *AddressIPv6) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AddressIPv6) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if ip := net.ParseIP(m.GetIpaddress()); ip == nil || ip.To4() != nil {
+		err := AddressIPv6ValidationError{
+			field:  "Ipaddress",
+			reason: "value must be a valid IPv6 address",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return AddressIPv6MultiError(errors)
+	}
+
+	return nil
+}
+
+// AddressIPv6MultiError is an error wrapping multiple validation errors
+// returned by AddressIPv6.ValidateAll() if the designated constraints aren't met.
+type AddressIPv6MultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AddressIPv6MultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AddressIPv6MultiError) AllErrors() []error { return m }
+
+// AddressIPv6ValidationError is the validation error returned by
+// AddressIPv6.Validate if the designated constraints aren't met.
+type AddressIPv6ValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AddressIPv6ValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AddressIPv6ValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AddressIPv6ValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AddressIPv6ValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AddressIPv6ValidationError) ErrorName() string { return "AddressIPv6ValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AddressIPv6ValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAddressIPv6.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AddressIPv6ValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AddressIPv6ValidationError{}
+
 // Validate checks the field values on Address with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -56,15 +276,80 @@ func (m *Address) validate(all bool) error {
 
 	var errors []error
 
-	if ip := net.ParseIP(m.GetIpaddress()); ip == nil {
+	switch m.Ipaddress.(type) {
+
+	case *Address_AddressIPv4:
+
+		if all {
+			switch v := interface{}(m.GetAddressIPv4()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, AddressValidationError{
+						field:  "AddressIPv4",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, AddressValidationError{
+						field:  "AddressIPv4",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetAddressIPv4()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AddressValidationError{
+					field:  "AddressIPv4",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Address_AddressIPv6:
+
+		if all {
+			switch v := interface{}(m.GetAddressIPv6()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, AddressValidationError{
+						field:  "AddressIPv6",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, AddressValidationError{
+						field:  "AddressIPv6",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetAddressIPv6()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AddressValidationError{
+					field:  "AddressIPv6",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
 		err := AddressValidationError{
 			field:  "Ipaddress",
-			reason: "value must be a valid IP address",
+			reason: "value is required",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
+
 	}
 
 	if len(errors) > 0 {
@@ -143,6 +428,483 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = AddressValidationError{}
+
+// Validate checks the field values on AddressCIDRIPv4 with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *AddressCIDRIPv4) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AddressCIDRIPv4 with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AddressCIDRIPv4MultiError, or nil if none found.
+func (m *AddressCIDRIPv4) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AddressCIDRIPv4) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetIpaddress() == nil {
+		err := AddressCIDRIPv4ValidationError{
+			field:  "Ipaddress",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetIpaddress()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AddressCIDRIPv4ValidationError{
+					field:  "Ipaddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AddressCIDRIPv4ValidationError{
+					field:  "Ipaddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetIpaddress()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AddressCIDRIPv4ValidationError{
+				field:  "Ipaddress",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if val := m.GetMask(); val < 0 || val > 32 {
+		err := AddressCIDRIPv4ValidationError{
+			field:  "Mask",
+			reason: "value must be inside range [0, 32]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return AddressCIDRIPv4MultiError(errors)
+	}
+
+	return nil
+}
+
+// AddressCIDRIPv4MultiError is an error wrapping multiple validation errors
+// returned by AddressCIDRIPv4.ValidateAll() if the designated constraints
+// aren't met.
+type AddressCIDRIPv4MultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AddressCIDRIPv4MultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AddressCIDRIPv4MultiError) AllErrors() []error { return m }
+
+// AddressCIDRIPv4ValidationError is the validation error returned by
+// AddressCIDRIPv4.Validate if the designated constraints aren't met.
+type AddressCIDRIPv4ValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AddressCIDRIPv4ValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AddressCIDRIPv4ValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AddressCIDRIPv4ValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AddressCIDRIPv4ValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AddressCIDRIPv4ValidationError) ErrorName() string { return "AddressCIDRIPv4ValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AddressCIDRIPv4ValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAddressCIDRIPv4.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AddressCIDRIPv4ValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AddressCIDRIPv4ValidationError{}
+
+// Validate checks the field values on AddressCIDRIPv6 with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *AddressCIDRIPv6) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AddressCIDRIPv6 with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AddressCIDRIPv6MultiError, or nil if none found.
+func (m *AddressCIDRIPv6) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AddressCIDRIPv6) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetIpaddress() == nil {
+		err := AddressCIDRIPv6ValidationError{
+			field:  "Ipaddress",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetIpaddress()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AddressCIDRIPv6ValidationError{
+					field:  "Ipaddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AddressCIDRIPv6ValidationError{
+					field:  "Ipaddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetIpaddress()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AddressCIDRIPv6ValidationError{
+				field:  "Ipaddress",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if val := m.GetMask(); val < 0 || val > 128 {
+		err := AddressCIDRIPv6ValidationError{
+			field:  "Mask",
+			reason: "value must be inside range [0, 128]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return AddressCIDRIPv6MultiError(errors)
+	}
+
+	return nil
+}
+
+// AddressCIDRIPv6MultiError is an error wrapping multiple validation errors
+// returned by AddressCIDRIPv6.ValidateAll() if the designated constraints
+// aren't met.
+type AddressCIDRIPv6MultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AddressCIDRIPv6MultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AddressCIDRIPv6MultiError) AllErrors() []error { return m }
+
+// AddressCIDRIPv6ValidationError is the validation error returned by
+// AddressCIDRIPv6.Validate if the designated constraints aren't met.
+type AddressCIDRIPv6ValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AddressCIDRIPv6ValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AddressCIDRIPv6ValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AddressCIDRIPv6ValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AddressCIDRIPv6ValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AddressCIDRIPv6ValidationError) ErrorName() string { return "AddressCIDRIPv6ValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AddressCIDRIPv6ValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAddressCIDRIPv6.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AddressCIDRIPv6ValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AddressCIDRIPv6ValidationError{}
+
+// Validate checks the field values on AddressCIDR with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *AddressCIDR) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AddressCIDR with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in AddressCIDRMultiError, or
+// nil if none found.
+func (m *AddressCIDR) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AddressCIDR) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	switch m.Addresscidr.(type) {
+
+	case *AddressCIDR_AddressCIDRIPv4:
+
+		if all {
+			switch v := interface{}(m.GetAddressCIDRIPv4()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, AddressCIDRValidationError{
+						field:  "AddressCIDRIPv4",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, AddressCIDRValidationError{
+						field:  "AddressCIDRIPv4",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetAddressCIDRIPv4()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AddressCIDRValidationError{
+					field:  "AddressCIDRIPv4",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *AddressCIDR_AddressCIDRIPv6:
+
+		if all {
+			switch v := interface{}(m.GetAddressCIDRIPv6()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, AddressCIDRValidationError{
+						field:  "AddressCIDRIPv6",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, AddressCIDRValidationError{
+						field:  "AddressCIDRIPv6",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetAddressCIDRIPv6()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AddressCIDRValidationError{
+					field:  "AddressCIDRIPv6",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		err := AddressCIDRValidationError{
+			field:  "Addresscidr",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if len(errors) > 0 {
+		return AddressCIDRMultiError(errors)
+	}
+
+	return nil
+}
+
+// AddressCIDRMultiError is an error wrapping multiple validation errors
+// returned by AddressCIDR.ValidateAll() if the designated constraints aren't met.
+type AddressCIDRMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AddressCIDRMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AddressCIDRMultiError) AllErrors() []error { return m }
+
+// AddressCIDRValidationError is the validation error returned by
+// AddressCIDR.Validate if the designated constraints aren't met.
+type AddressCIDRValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AddressCIDRValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AddressCIDRValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AddressCIDRValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AddressCIDRValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AddressCIDRValidationError) ErrorName() string { return "AddressCIDRValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AddressCIDRValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAddressCIDR.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AddressCIDRValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AddressCIDRValidationError{}
 
 // Validate checks the field values on AddressAndPort with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -306,6 +1068,17 @@ func (m *UnderlayUnknown) validate(all bool) error {
 
 	var errors []error
 
+	if m.GetEndpoint() == nil {
+		err := UnderlayUnknownValidationError{
+			field:  "Endpoint",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
 		switch v := interface{}(m.GetEndpoint()).(type) {
 		case interface{ ValidateAll() error }:
@@ -434,6 +1207,17 @@ func (m *UnderlayTailscale) validate(all bool) error {
 	}
 
 	var errors []error
+
+	if m.GetEndpoint() == nil {
+		err := UnderlayTailscaleValidationError{
+			field:  "Endpoint",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if all {
 		switch v := interface{}(m.GetEndpoint()).(type) {
@@ -677,6 +1461,17 @@ func (m *Curve25519KeyPair) validate(all bool) error {
 
 	var errors []error
 
+	if m.GetPublickey() == nil {
+		err := Curve25519KeyPairValidationError{
+			field:  "Publickey",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
 		switch v := interface{}(m.GetPublickey()).(type) {
 		case interface{ ValidateAll() error }:
@@ -704,6 +1499,17 @@ func (m *Curve25519KeyPair) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.GetPrivatekey() == nil {
+		err := Curve25519KeyPairValidationError{
+			field:  "Privatekey",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if all {
@@ -837,6 +1643,17 @@ func (m *UnderlayWireguard) validate(all bool) error {
 
 	var errors []error
 
+	if m.GetEndpoint() == nil {
+		err := UnderlayWireguardValidationError{
+			field:  "Endpoint",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
 		switch v := interface{}(m.GetEndpoint()).(type) {
 		case interface{ ValidateAll() error }:
@@ -864,6 +1681,17 @@ func (m *UnderlayWireguard) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.GetPublicKey() == nil {
+		err := UnderlayWireguardValidationError{
+			field:  "PublicKey",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if all {
@@ -997,6 +1825,17 @@ func (m *UnderlayLinuxKernelWireguard) validate(all bool) error {
 
 	var errors []error
 
+	if m.GetEndpoint() == nil {
+		err := UnderlayLinuxKernelWireguardValidationError{
+			field:  "Endpoint",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
 		switch v := interface{}(m.GetEndpoint()).(type) {
 		case interface{ ValidateAll() error }:
@@ -1024,6 +1863,17 @@ func (m *UnderlayLinuxKernelWireguard) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.GetPublicKey() == nil {
+		err := UnderlayLinuxKernelWireguardValidationError{
+			field:  "PublicKey",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if all {
@@ -1236,145 +2086,6 @@ var _ interface {
 	ErrorName() string
 } = ASNValidationError{}
 
-// Validate checks the field values on AddressCIDR with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *AddressCIDR) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on AddressCIDR with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in AddressCIDRMultiError, or
-// nil if none found.
-func (m *AddressCIDR) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *AddressCIDR) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetIpaddress()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, AddressCIDRValidationError{
-					field:  "Ipaddress",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, AddressCIDRValidationError{
-					field:  "Ipaddress",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetIpaddress()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return AddressCIDRValidationError{
-				field:  "Ipaddress",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if val := m.GetMask(); val < 0 || val > 32 {
-		err := AddressCIDRValidationError{
-			field:  "Mask",
-			reason: "value must be inside range [0, 32]",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return AddressCIDRMultiError(errors)
-	}
-
-	return nil
-}
-
-// AddressCIDRMultiError is an error wrapping multiple validation errors
-// returned by AddressCIDR.ValidateAll() if the designated constraints aren't met.
-type AddressCIDRMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m AddressCIDRMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m AddressCIDRMultiError) AllErrors() []error { return m }
-
-// AddressCIDRValidationError is the validation error returned by
-// AddressCIDR.Validate if the designated constraints aren't met.
-type AddressCIDRValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e AddressCIDRValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e AddressCIDRValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e AddressCIDRValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e AddressCIDRValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e AddressCIDRValidationError) ErrorName() string { return "AddressCIDRValidationError" }
-
-// Error satisfies the builtin error interface
-func (e AddressCIDRValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sAddressCIDR.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = AddressCIDRValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = AddressCIDRValidationError{}
-
 // Validate checks the field values on SourceBasedRoutingOption with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -1534,6 +2245,17 @@ func (m *Peer) validate(all bool) error {
 
 	// no validation rules for Name
 
+	if m.GetAsnumber() == nil {
+		err := PeerValidationError{
+			field:  "Asnumber",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if all {
 		switch v := interface{}(m.GetAsnumber()).(type) {
 		case interface{ ValidateAll() error }:
@@ -1563,33 +2285,38 @@ func (m *Peer) validate(all bool) error {
 		}
 	}
 
-	if all {
-		switch v := interface{}(m.GetAddress()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, PeerValidationError{
-					field:  "Address",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+	for idx, item := range m.GetAddress() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PeerValidationError{
+						field:  fmt.Sprintf("Address[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PeerValidationError{
+						field:  fmt.Sprintf("Address[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-		case interface{ Validate() error }:
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, PeerValidationError{
-					field:  "Address",
+				return PeerValidationError{
+					field:  fmt.Sprintf("Address[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetAddress()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return PeerValidationError{
-				field:  "Address",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+
 	}
 
 	if all {
@@ -1746,6 +2473,16 @@ func (m *Peer) validate(all bool) error {
 				}
 			}
 		}
+
+	default:
+		err := PeerValidationError{
+			field:  "Underlay",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 
 	}
 
@@ -2315,33 +3052,60 @@ func (m *AddressAssignResponse) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetAddress()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, AddressAssignResponseValidationError{
-					field:  "Address",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+	if len(m.GetAddress()) < 1 {
+		err := AddressAssignResponseValidationError{
+			field:  "Address",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetAddress() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, AddressAssignResponseValidationError{
+						field:  fmt.Sprintf("Address[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, AddressAssignResponseValidationError{
+						field:  fmt.Sprintf("Address[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-		case interface{ Validate() error }:
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, AddressAssignResponseValidationError{
-					field:  "Address",
+				return AddressAssignResponseValidationError{
+					field:  fmt.Sprintf("Address[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetAddress()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return AddressAssignResponseValidationError{
-				field:  "Address",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+
+	}
+
+	if m.GetAsnumber() == nil {
+		err := AddressAssignResponseValidationError{
+			field:  "Asnumber",
+			reason: "value is required",
 		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if all {
@@ -2474,6 +3238,17 @@ func (m *RegisterPeerRequest) validate(all bool) error {
 	}
 
 	var errors []error
+
+	if m.GetPeer() == nil {
+		err := RegisterPeerRequestValidationError{
+			field:  "Peer",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if all {
 		switch v := interface{}(m.GetPeer()).(type) {
@@ -2709,6 +3484,17 @@ func (m *PeerStatus) validate(all bool) error {
 	}
 
 	var errors []error
+
+	if m.GetPeer() == nil {
+		err := PeerStatusValidationError{
+			field:  "Peer",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if all {
 		switch v := interface{}(m.GetPeer()).(type) {
