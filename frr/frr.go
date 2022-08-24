@@ -75,7 +75,7 @@ func (f *FrrInstance) newFrrPeerConfig(p []status.FrrPeerDiffrence) *frrPeerConf
 	fc.HostName = f.frrConfig.hostname
 	fc.IPAddr = f.frrConfig.overlayIP
 	for _, pp := range p {
-		fc.Peers = append(fc.Peers, FrrConfigPeer{Add: true, IPAddr: pp.Peer.GetAddress().GetIpaddress(), ASN: fmt.Sprintf("%d", pp.Peer.GetAsnumber().GetNumber()), IFName: pp.TunName})
+		fc.Peers = append(fc.Peers, FrrConfigPeer{Add: true, IPAddr: pp.Peer.GetAddress()[0].ToNetIPNet().IP.String(), ASN: fmt.Sprintf("%d", pp.Peer.GetAsnumber().GetNumber()), IFName: pp.TunName})
 	}
 	return fc
 }

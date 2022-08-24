@@ -129,9 +129,9 @@ func main() {
 	}
 
 	//set got meshover ip before
-	tunnel.SetAddress(client.OverlayIP)
+	tunnel.SetAddress(client.OverlayIP.IP)
 	tunnel.SetListenPort(12912)
-	stat.IPAddr = net.IPNet{IP: client.OverlayIP, Mask: net.IPv4Mask(255, 255, 255, 255)}
+	stat.IPAddr = net.IPNet{IP: client.OverlayIP.IP, Mask: net.IPv4Mask(255, 255, 255, 255)}
 	stat.ASN = asn
 
 	term := make(chan os.Signal, 1)
@@ -181,7 +181,7 @@ func main() {
 				if len(diff) > 0 {
 					frrdiff := make([]status.FrrPeerDiffrence, len(diff))
 					for _, d := range diff {
-						frrdiff = append(frrdiff, status.FrrPeerDiffrence{PeerDiffrence: d, TunName: greInstance.FindTunNameByOppositeIP(d.Peer.GetAddress().ToNetIP())})
+						frrdiff = append(frrdiff, status.FrrPeerDiffrence{PeerDiffrence: d, TunName: greInstance.FindTunNameByOppositeIP(d.Peer.GetAddress())})
 					}
 					fmt.Println("updating...", frrdiff)
 					tunnel.UpdatePeers(diff)
