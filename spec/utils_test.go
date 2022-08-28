@@ -12,8 +12,12 @@ func TestNewAddressCIDR(t *testing.T) {
 		in   string
 	}{
 		{
-			name: "1",
+			name: "v4",
 			in:   "192.168.0.1/16",
+		},
+		{
+			name: "v6",
+			in:   "fd80::/56",
 		},
 	}
 	for _, d := range data {

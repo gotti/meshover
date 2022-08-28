@@ -24,7 +24,7 @@ import (
 var (
 	listenAddress      = flag.String("listen", "", "example: 0.0.0.0:8080")
 	stateFilePath      = flag.String("statefile", "state", "filename")
-	assignAddressRange = flag.String("assignaddress", "10.128.0.0/12,fd00:beef:beef::/48", "cidr ipaddress")
+	assignAddressRange = flag.String("assignaddress", "10.128.0.0/12,fd00:beef:beef::/48", "list of cidr ipaddress")
 )
 
 type controlServer struct {
