@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -28,10 +29,15 @@ var frrDaemonsConfig string
 var frrVtyshConfig string
 
 var (
-	controlserver = flag.String("controlserver", "", "localhost:8080")
-	hostName      = flag.String("hostname", "", "hostname")
-	capabl        = flag.String("cap", "", "wireguard,linuxkernelwireguard")
-	staticRoutes  = flag.String("static", "", "192.168.0.0/16")
+	controlserver     = flag.String("controlserver", "", "localhost:8080")
+	hostName          = flag.String("hostname", "", "hostname")
+	capabl            = flag.String("cap", "", "wireguard,linuxkernelwireguard")
+	staticRoutes      = flag.String("static", "", "192.168.0.0/16")
+	rawRouteGathering = flag.String("gathering", "", "1.1.1.0/27,1.1.2.0/29")
+)
+
+var (
+	routeGathering []*net.IPNet
 )
 
 func getMachineAddresses() (ret []*net.IPNet, err error) {
@@ -56,14 +62,27 @@ func getMachineAddresses() (ret []*net.IPNet, err error) {
 	return ret, nil
 }
 
-func parseArgs() {
+func parseArgs() error {
 	if *hostName == "" {
 		h, err := os.Hostname()
 		if err != nil {
-			log.Fatalf("failed to get hostname, err=%s", err)
+			return fmt.Errorf("failed to get hostname, err=%w", err)
 		}
 		hostName = &h
 	}
+	if *rawRouteGathering != "" {
+		for _, r := range strings.Split(*rawRouteGathering, ",") {
+			_, n, err := net.ParseCIDR(r)
+			if err != nil {
+				return fmt.Errorf("failed to parse route gathering option, err=%w", err)
+			}
+			routeGathering = append(routeGathering, n)
+		}
+	}
+	if *controlserver == "" {
+		return fmt.Errorf("controlserver is not specified")
+	}
+	return nil
 }
 
 func readConfig(confPath string) string {
@@ -74,37 +93,45 @@ func readConfig(confPath string) string {
 	return string(b)
 }
 
+func panicError(message string, err error) {
+	log.Fatalln("panic: ", message, err)
+}
+
 func main() {
 	flag.Parse()
-	parseArgs()
-	if *controlserver == "" {
-		log.Fatalln("controlserver is not specified")
+	if err := parseArgs(); err != nil {
+		panicError("failed to parse args", err)
 	}
-	p := &spec.Peers{}
-	stat := status.NewClient(*hostName, "meshover0", p)
+	stat := status.NewClient(*hostName, "meshover0", &spec.Peers{})
 
+	//get ipv6 unicast address from device or vlan
+	addrs, err := getMachineAddresses()
+	if err != nil {
+		panicError("failed to get ipv6 unicast address", err)
+	}
+
+	//generate wireguard instance
+	//generate keypair
 	tunnel := linuxwireguard.NewTunnel(stat)
 	defer func() {
 		err := tunnel.Close()
 		if err != nil {
-			log.Fatalln(err)
+			panicError("failed to close wireguard tunnel", err)
 		}
 	}()
-	addrs, err := getMachineAddresses()
-	if err != nil {
-		log.Fatalln(err)
-	}
 
 	ctx := context.Background()
+	//send query for getting meshover ip
 	client, asn, err := grpcclient.NewClient(ctx, *hostName, *controlserver, tunnel.GetPublicKey(), &spec.AddressAndPort{Ipaddress: spec.NewAddress(addrs[0].IP), Port: 12912})
 	defer client.Close()
 	if err != nil {
-		log.Fatalln(err)
+		panicError("failed to create new grpc connection", err)
 	}
 
-	tunnel.SetAddressWithoutTouchingLinuxNetwork(client.OverlayIP)
+	//set got meshover ip before
+	tunnel.SetAddress(client.OverlayIP.IP)
 	tunnel.SetListenPort(12912)
-	stat.IPAddr = net.IPNet{IP: client.OverlayIP, Mask: net.IPv4Mask(255, 255, 255, 255)}
+	stat.IPAddr = net.IPNet{IP: client.OverlayIP.IP, Mask: net.IPv4Mask(255, 255, 255, 255)}
 	stat.ASN = asn
 
 	term := make(chan os.Signal, 1)
@@ -115,10 +142,28 @@ func main() {
 	watchctx, watchcancel := context.WithCancel(context.Background())
 	defer watchcancel()
 
-	c := make(chan []status.FrrPeer)
+	c := make(chan []status.FrrPeerDiffrence)
 
+	gre.Clean()
 	greInstance := gre.NewGreInstance(stat.IPAddr.IP)
-	defer greInstance.Clean()
+	defer gre.Clean()
+
+	conf := frr.NewFrrConfig(*hostName, client.OverlayIP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
+	f, err := frr.NewInstance(ctx, asn, conf)
+	if err != nil {
+		panicError("failed to create frr instance", err)
+	}
+	defer func() {
+		err := f.Clean()
+		if err != nil {
+			panicError("failed to cleanup frr container", err)
+		}
+	}()
+	go func() {
+		if f.Up(ctx); err != nil {
+			panicError("failed to up frr instance", err)
+		}
+	}()
 
 	go func() {
 		for {
@@ -134,35 +179,18 @@ func main() {
 					log.Println(err)
 				}
 				if len(diff) > 0 {
-					fmt.Println("updating...", diff)
+					frrdiff := make([]status.FrrPeerDiffrence, len(diff))
+					for _, d := range diff {
+						frrdiff = append(frrdiff, status.FrrPeerDiffrence{PeerDiffrence: d, TunName: greInstance.FindTunNameByOppositeIP(d.Peer.GetAddress())})
+					}
+					fmt.Println("updating...", frrdiff)
 					tunnel.UpdatePeers(diff)
 					greInstance.UpdatePeers(diff)
-					frrpeers := []status.FrrPeer{}
-					for _, p := range pe.GetPeers() {
-						fp := status.FrrPeer{Peer: p, TunName: greInstance.FindTunNameByOppositeIP(p.GetAddress().ToNetIP())}
-						frrpeers = append(frrpeers, fp)
-					}
-					c <- frrpeers
+					c <- frrdiff
 				}
 			case <-watchctx.Done():
 				return
 			}
-		}
-	}()
-	conf := frr.NewFrrConfig(*hostName, client.OverlayIP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
-	f, err := frr.NewInstance(ctx, asn, conf)
-	if err != nil {
-		log.Fatalln("failed to create frr instance", err)
-	}
-	defer func() {
-		err := f.Clean()
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}()
-	go func() {
-		if f.Up(ctx); err != nil {
-			log.Fatalln("failed to up frr instance", err)
 		}
 	}()
 	go func() {
@@ -175,6 +203,7 @@ func main() {
 			}
 		}
 	}()
+
 	select {
 	case <-term:
 	}

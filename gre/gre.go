@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/gotti/meshover/spec"
 	"github.com/gotti/meshover/status"
 	"github.com/vishvananda/netlink"
 )
@@ -20,7 +21,7 @@ type GreTunnel struct {
 	TunName    string
 	link       netlink.Link
 	peerName   string
-	OppositeIP net.IP
+	OppositeIP net.IPNet
 }
 
 var (
@@ -38,9 +39,9 @@ func (g *GreStatus) addTunnelPeer(p *status.PeerDiffrence) error {
 	gretun := &netlink.Gretun{
 		LinkAttrs: attr,
 		Local:     g.selfIP,
-		Remote:    p.Peer.GetAddress().ToNetIP(),
+		Remote:    p.Peer.GetAddress()[0].ToNetIPNet().IP,
 	}
-	fmt.Printf("local=%s, remote=%s, device=%s\n", g.selfIP, p.Peer.GetAddress().ToNetIP(), gretun.LinkAttrs.Name)
+	fmt.Printf("local=%s, remote=%s, device=%s\n", g.selfIP, p.Peer.GetAddress(), gretun.LinkAttrs.Name)
 	if err := netlink.LinkAdd(gretun); err != nil {
 		if strings.Contains(err.Error(), "file exists") {
 			if err := netlink.LinkDel(gretun); err != nil {
@@ -53,16 +54,27 @@ func (g *GreStatus) addTunnelPeer(p *status.PeerDiffrence) error {
 	if err := netlink.LinkSetUp(gretun); err != nil {
 		log.Fatalln("failed to up gre tunnel", err)
 	}
-	gt := &GreTunnel{TunName: tun, link: gretun, peerName: p.Peer.GetName(), OppositeIP: p.Peer.GetAddress().ToNetIP()}
+	gt := &GreTunnel{TunName: tun, link: gretun, peerName: p.Peer.GetName(), OppositeIP: *p.Peer.GetAddress()[0].ToNetIPNet()}
 	g.tunnels = append(g.tunnels, gt)
+	fmt.Println("tunnels")
+	for _, t := range g.tunnels {
+		fmt.Printf("%+v", t)
+	}
 	g.counter++
 	return nil
 }
 
-func (g *GreStatus) Clean() {
-	for _, p := range g.tunnels {
-		if err := netlink.LinkDel(p.link); err != nil {
-			log.Fatalln("failed to clean up, err deleting", err)
+func Clean() {
+	links, err := netlink.LinkList()
+	if err != nil {
+		log.Fatalln("failed to delete gre peer", err)
+	}
+	for _, l := range links {
+		if strings.HasPrefix(l.Attrs().Name, "meshover0-tun") {
+			err := netlink.LinkDel(l)
+			if err != nil {
+				log.Fatalln(err)
+			}
 		}
 	}
 }
@@ -99,10 +111,12 @@ func (g *GreStatus) UpdatePeers(peersDiff []status.PeerDiffrence) {
 	}
 }
 
-func (g *GreStatus) FindTunNameByOppositeIP(opossiteIP net.IP) (tunName string) {
+func (g *GreStatus) FindTunNameByOppositeIP(opossiteIP []*spec.AddressCIDR) (tunName string) {
 	for _, p := range g.tunnels {
-		if p.OppositeIP.Equal(p.OppositeIP) {
-			return p.TunName
+		for _, i := range opossiteIP {
+			if p.OppositeIP.IP.Equal(i.ToNetIPNet().IP) {
+				return p.TunName
+			}
 		}
 	}
 	return ""
