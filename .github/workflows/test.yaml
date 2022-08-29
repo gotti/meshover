@@ -21,4 +21,4 @@ jobs:
       -
         name: test
         run: |
-          go list ./... | grep -v "github.com/gotti/meshover/wireguard" | xargs go test
+          go list ./... | grep -v "github.com/gotti/meshover/wireguard" | xargs go test -cover
