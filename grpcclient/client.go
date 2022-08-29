@@ -3,6 +3,7 @@ package grpcclient
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/gotti/meshover/spec"
@@ -30,7 +31,11 @@ func NewClient(ctx context.Context, hostName string, controlserver string, publi
 		return nil, nil, fmt.Errorf("failed to request address assign, err=%w", err)
 	}
 	overlayIP := r.GetAddress()[0]
-	fmt.Printf("assigned address %s\n", overlayIP)
+	overlayIPNet := overlayIP.ToNetIPNet()
+	if overlayIPNet == nil {
+		log.Fatalln("failed to parse overlayIP")
+	}
+	fmt.Printf("assigned address %s\n", r.GetAddress())
 	req := new(spec.RegisterPeerRequest)
 	req.Peer = new(spec.Peer)
 	req.Peer.Address = r.GetAddress()
@@ -45,7 +50,7 @@ func NewClient(ctx context.Context, hostName string, controlserver string, publi
 	if !res.Ok {
 		return nil, nil, fmt.Errorf("ok is false when registering peer")
 	}
-	return &Client{context: ctx, OverlayIP: *overlayIP.ToNetIPNet(), conn: conn, grpcConn: c}, r.GetAsnumber(), nil
+	return &Client{context: ctx, OverlayIP: *overlayIPNet, conn: conn, grpcConn: c}, r.GetAsnumber(), nil
 }
 
 func (c *Client) Close() error {
