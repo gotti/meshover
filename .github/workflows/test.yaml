@@ -21,4 +21,4 @@ jobs:
       -
         name: build
         run: |
-          go test ./**.go
+          go list ./... | xargs go test
