@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/gotti/meshover/spec"
-	"github.com/gotti/meshover/utils/ip"
+	"github.com/gotti/meshover/pkg/ip"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

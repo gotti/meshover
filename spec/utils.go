@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net"
+	"strconv"
 
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/curve25519"
@@ -92,6 +93,11 @@ func (a *Address) ToNetIP() net.IP {
 	return nil
 }
 
+//Format formats Address to like "192.168.0.0"
+func (a *Address) Format() string {
+	return string(a.ToNetIP().String())
+}
+
 // ToNetIPNet translates from AddressCIDR into [net.IPNet]
 func (n *AddressCIDR) ToNetIPNet() *net.IPNet {
 	if v4 := n.GetAddressCIDRIPv4(); v4 != nil {
@@ -104,4 +110,36 @@ func (n *AddressCIDR) ToNetIPNet() *net.IPNet {
 		return &net.IPNet{IP: r, Mask: net.CIDRMask(int(v6.GetMask()), 128)}
 	}
 	return nil
+}
+
+//ToAddress converts AddressCIDR to Address
+func (n *AddressCIDR) ToAddress() *Address{
+	var ret Address
+	if v4 := n.GetAddressCIDRIPv4(); v4 != nil {
+		r := v4.GetIpaddress()
+		ret.Ipaddress = &Address_AddressIPv4{AddressIPv4: r}
+		return &ret
+	}
+	if v6 := n.GetAddressCIDRIPv6(); v6 != nil {
+		r := v6.GetIpaddress()
+		ret.Ipaddress = &Address_AddressIPv6{AddressIPv6: r}
+		return &ret
+	}
+	return nil
+}
+
+//GetMask returns mask
+func (n *AddressCIDR) GetMask() int32{
+	if v4 := n.GetAddressCIDRIPv4(); v4 != nil {
+		return v4.GetMask()
+	}
+	if v6 := n.GetAddressCIDRIPv6(); v6 != nil {
+		return v6.GetMask()
+	}
+	return -1
+}
+
+//Format formats to string like "192.168.0.0/16"
+func (n *AddressCIDR) Format() string {
+	return n.ToAddress().Format()+"/"+strconv.Itoa(int(n.GetMask()))
 }

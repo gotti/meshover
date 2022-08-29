@@ -86,7 +86,7 @@ func (t *WireguardTunnel) Close() error {
 
 func (t *WireguardTunnel) setPeer(p *spec.Peer) error {
 	u := p.GetUnderlayLinuxKernelWireguard()
-	o, err := exec.Command("wg", "set", t.link.Attrs().Name, "peer", u.GetPublicKey().EncodeBase64(), "allowed-ips", p.GetAddress()[0].String(), "endpoint", fmt.Sprintf("%s", u.GetEndpoint().Format()), "persistent-keepalive", "10").CombinedOutput()
+	o, err := exec.Command("wg", "set", t.link.Attrs().Name, "peer", u.GetPublicKey().EncodeBase64(), "allowed-ips", p.GetAddress()[0].Format(), "endpoint", fmt.Sprintf("%s", u.GetEndpoint().Format()), "persistent-keepalive", "10").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to set peer, out=%s, err=%w", string(o), err)
 	}
