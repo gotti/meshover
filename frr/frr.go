@@ -71,12 +71,13 @@ func (f *FrrInstance) Clean() error {
 
 func (f *FrrInstance) newFrrPeerConfig(p []status.FrrPeerDiffrence) *frrPeerConfig {
 	fc := new(frrPeerConfig)
-	fc.ASN = fmt.Sprintf("%d", f.asn.GetNumber())
+	fc.ASN = f.asn.Format()
 	fc.HostName = f.frrConfig.hostname
 	fc.IPAddr = f.frrConfig.overlayIP
 	for _, pp := range p {
-		fc.Peers = append(fc.Peers, FrrConfigPeer{Add: true, IPAddr: pp.Peer.GetAddress()[0].ToNetIPNet().IP.String(), ASN: fmt.Sprintf("%d", pp.Peer.GetAsnumber().GetNumber()), IFName: pp.TunName})
+		fc.Peers = append(fc.Peers, FrrConfigPeer{Add: true, IPAddr: pp.Peer.GetAddress()[0].ToNetIPNet().IP.String(), ASN: pp.Peer.GetAsnumber().Format(), IFName: pp.TunName})
 	}
+	fmt.Printf("\n fc %+v\n", fc)
 	return fc
 }
 
