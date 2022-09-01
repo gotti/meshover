@@ -1,6 +1,6 @@
 module github.com/gotti/meshover
 
-go 1.18
+go 1.19
 
 require (
 	github.com/docker/docker v20.10.17+incompatible
