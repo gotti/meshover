@@ -32,6 +32,14 @@ func NewGreInstance(selfIP net.IP) *GreStatus {
 	return &GreStatus{selfIP: selfIP}
 }
 
+func addressCIDRArrayToIPNetArray(a []*spec.AddressCIDR) []net.IPNet {
+	var ret []net.IPNet
+	for _, d := range a {
+		ret = append(ret, *d.ToNetIPNet())
+	}
+	return ret
+}
+
 func (g *GreStatus) addTunnelPeer(p *status.PeerDiffrence) error {
 	tun := fmt.Sprintf("meshover0-tun%d", g.counter)
 	attr := netlink.NewLinkAttrs()
@@ -111,13 +119,11 @@ func (g *GreStatus) UpdatePeers(peersDiff []status.PeerDiffrence) {
 	}
 }
 
-func (g *GreStatus) FindTunNameByOppositeIP(opossiteIP []*spec.AddressCIDR) (tunName string) {
+func (g *GreStatus) FindTunNameByOppositeIP(opossiteIP net.IP) (tunName string, err error) {
 	for _, p := range g.tunnels {
-		for _, i := range opossiteIP {
-			if p.OppositeIP.IP.Equal(i.ToNetIPNet().IP) {
-				return p.TunName
-			}
+		if p.OppositeIP.IP.Equal(opossiteIP) {
+			return p.TunName, nil
 		}
 	}
-	return ""
+	return "", fmt.Errorf("not found such opposite IP")
 }

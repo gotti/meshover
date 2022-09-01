@@ -93,7 +93,7 @@ func (a *Address) ToNetIP() net.IP {
 	return nil
 }
 
-//Format formats Address to like "192.168.0.0"
+// Format formats Address to like "192.168.0.0"
 func (a *Address) Format() string {
 	return string(a.ToNetIP().String())
 }
@@ -112,8 +112,8 @@ func (n *AddressCIDR) ToNetIPNet() *net.IPNet {
 	return nil
 }
 
-//ToAddress converts AddressCIDR to Address
-func (n *AddressCIDR) ToAddress() *Address{
+// ToAddress converts AddressCIDR to Address
+func (n *AddressCIDR) ToAddress() *Address {
 	var ret Address
 	if v4 := n.GetAddressCIDRIPv4(); v4 != nil {
 		r := v4.GetIpaddress()
@@ -128,8 +128,8 @@ func (n *AddressCIDR) ToAddress() *Address{
 	return nil
 }
 
-//GetMask returns mask
-func (n *AddressCIDR) GetMask() int32{
+// GetMask returns mask
+func (n *AddressCIDR) GetMask() int32 {
 	if v4 := n.GetAddressCIDRIPv4(); v4 != nil {
 		return v4.GetMask()
 	}
@@ -139,7 +139,12 @@ func (n *AddressCIDR) GetMask() int32{
 	return -1
 }
 
-//Format formats to string like "192.168.0.0/16"
+// Format formats to string like "192.168.0.0/16"
 func (n *AddressCIDR) Format() string {
-	return n.ToAddress().Format()+"/"+strconv.Itoa(int(n.GetMask()))
+	return n.ToAddress().Format() + "/" + strconv.Itoa(int(n.GetMask()))
+}
+
+// Format returns ASN with string
+func (a *ASN) Format() string {
+	return strconv.FormatUint(uint64(a.GetNumber()), 10)
 }

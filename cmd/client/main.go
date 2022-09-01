@@ -129,7 +129,9 @@ func main() {
 	}
 
 	//set got meshover ip before
-	tunnel.SetAddress(client.OverlayIP.IP)
+	if err := tunnel.SetAddress(client.OverlayIP); err != nil {
+		panicError("failed to set address", err)
+	}
 	tunnel.SetListenPort(12912)
 	stat.IPAddr = net.IPNet{IP: client.OverlayIP.IP, Mask: net.IPv4Mask(255, 255, 255, 255)}
 	stat.ASN = asn
@@ -148,7 +150,7 @@ func main() {
 	greInstance := gre.NewGreInstance(stat.IPAddr.IP)
 	defer gre.Clean()
 
-	conf := frr.NewFrrConfig(*hostName, client.OverlayIP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
+	conf := frr.NewFrrConfig(*hostName, client.OverlayIP.IP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
 	f, err := frr.NewInstance(ctx, asn, conf)
 	if err != nil {
 		panicError("failed to create frr instance", err)
@@ -174,18 +176,24 @@ func main() {
 					log.Printf("failed to ListPeers err=%s", err)
 				}
 				pe := res.GetPeers()
-				diff, err := stat.UpdatePeers(status.NewPeers(pe))
+				ppp := status.NewPeers(pe)
+				diff, err := stat.UpdatePeers(ppp)
 				if err != nil {
 					log.Println(err)
 				}
 				if len(diff) > 0 {
-					frrdiff := make([]status.FrrPeerDiffrence, len(diff))
+					frrdiff := []status.FrrPeerDiffrence{}
+					greInstance.UpdatePeers(diff)
 					for _, d := range diff {
-						frrdiff = append(frrdiff, status.FrrPeerDiffrence{PeerDiffrence: d, TunName: greInstance.FindTunNameByOppositeIP(d.Peer.GetAddress())})
+						oppsite, err := greInstance.FindTunNameByOppositeIP(d.Peer.GetAddress()[0].ToNetIPNet().IP)
+						if err != nil {
+							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.Peer.GetAddress()[0].ToNetIPNet(), err)
+						}
+						fmt.Println("opposite", oppsite)
+						frrdiff = append(frrdiff, status.FrrPeerDiffrence{PeerDiffrence: d, TunName: oppsite})
 					}
 					fmt.Println("updating...", frrdiff)
 					tunnel.UpdatePeers(diff)
-					greInstance.UpdatePeers(diff)
 					c <- frrdiff
 				}
 			case <-watchctx.Done():

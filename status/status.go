@@ -79,15 +79,15 @@ func (c *ClientStatus) UpdatePeers(peers *Peers) ([]PeerDiffrence, error) {
 	}
 	ret := make([]PeerDiffrence, 0)
 	//現在は存在するが次存在しないもの
-	for _, q := range c.Peers.peers.GetPeers() {
+	for i, q := range c.Peers.peers.GetPeers() {
 		if !peers.haveEqual(q) {
-			ret = append(ret, PeerDiffrence{Add: false, Peer: q})
+			ret = append(ret, PeerDiffrence{Add: false, Peer: c.Peers.peers.GetPeers()[i]})
 		}
 	}
 	//次存在するが現在存在しない
-	for _, q := range peers.peers.GetPeers() {
+	for i, q := range peers.peers.GetPeers() {
 		if !c.Peers.haveEqual(q) {
-			ret = append(ret, PeerDiffrence{Add: true, Peer: q})
+			ret = append(ret, PeerDiffrence{Add: true, Peer: peers.peers.GetPeers()[i]})
 		}
 	}
 	c.Peers.peers = peers.peers
