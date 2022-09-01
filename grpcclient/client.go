@@ -3,10 +3,10 @@ package grpcclient
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 
 	"github.com/gotti/meshover/spec"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -18,7 +18,7 @@ type Client struct {
 	grpcConn  spec.ControlPlaneServiceClient
 }
 
-func NewClient(ctx context.Context, hostName string, controlserver string, publickey *spec.Curve25519Key, underlayAddress *spec.AddressAndPort) (*Client, *spec.ASN, error) {
+func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlserver string, publickey *spec.Curve25519Key, underlayAddress *spec.AddressAndPort, routeGather []*net.IPNet) (*Client, *spec.ASN, error) {
 	conn, err := grpc.Dial(controlserver, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to connect to controlserver, err=%w", err)
@@ -33,7 +33,7 @@ func NewClient(ctx context.Context, hostName string, controlserver string, publi
 	overlayIP := r.GetAddress()[0]
 	overlayIPNet := overlayIP.ToNetIPNet()
 	if overlayIPNet == nil {
-		log.Fatalln("failed to parse overlayIP")
+		log.Panic("failed to parse overlayIP")
 	}
 	fmt.Printf("assigned address %s\n", r.GetAddress())
 	req := new(spec.RegisterPeerRequest)
@@ -41,6 +41,11 @@ func NewClient(ctx context.Context, hostName string, controlserver string, publi
 	req.Peer.Address = r.GetAddress()
 	req.Peer.Asnumber = r.GetAsnumber()
 	req.Peer.Name = hostName
+	sbr := &spec.SourceBasedRoutingOption{SourceIPRange: []*spec.AddressCIDR{}}
+	for _, r := range routeGather {
+		sbr.SourceIPRange = append(sbr.SourceIPRange, spec.NewAddressCIDR(*r))
+	}
+	req.Peer.SbrOption = sbr
 	wg := &spec.UnderlayLinuxKernelWireguard{Endpoint: underlayAddress, PublicKey: publickey}
 	req.Peer.Underlay = &spec.Peer_UnderlayLinuxKernelWireguard{UnderlayLinuxKernelWireguard: wg}
 	res, err := c.RegisterPeer(ctx, req)
