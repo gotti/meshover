@@ -65,6 +65,10 @@ IPv6を使ってWireguardでフルメッシュVPNを構成する。tailscaleやc
 - [x] FRRをdockerで立ち上げて自動生成したBGPの設定を投入する。
   - [x] BGP unnumberedでmeshoverの他ノードとピアリング。
   - [x] テンプレを変更してノード特有の設定(たとえばCalicoとBGPで接続する)が可能。
+- [x] Source IP based routing
+  - グローバルIPにSNATされたパケットを特定ノードに転送する。
+  - MetalLBでSVCとかVMにグローバルIPを割り当てた際に適切に処理できるようになる。
+  - オプション`-gathering <CIDR range>`を指定したノードにその範囲のIPアドレスが集約される。
 
 ## 技術
 
@@ -117,15 +121,10 @@ sudo ./client -controlserver <IP Address to server>:12384
 
 ## TODO
 
+新しく追加したものはIssueにある。ここに残っているものは最初期に作ったTODOのみ。
+
 - wireguard周りのリファクタリング
   - wireguard-tools無しでも動くようにもしたいね
-- Source IPを元にしたルーティング
-  - グローバルIPをいくつか持っていてMetalLBが広報するという状況
-  - LBによりPod IPがグローバルIPにSNATされる
-  - 今の構成だと各ノードのデフォルトゲートウェイである普通のプロバイダにsrcがグローバルIPなパケットが飛んでしまう
-  - あるアドレスレンジがsrcとなっているパケットをそのレンジの管理ノードへ集める設定がほしい。アドレス収集と呼ぶことにする。
-  - src routingみたいな引数作ってgRPCでノード情報の一部として配り、各ノードでFRRのPBRを設定すればOK
-  - ルーティングの情報がFRRに集約できずオレオレも混じるのがちょっとつらいけど
 - FRRのListen IPをデフォルトではWireguardのIPだけにする
   - meshover以外とBGP接続するノードのためにファイアウォールもちゃんとやらないと
 - BGPのルーティング情報の検証

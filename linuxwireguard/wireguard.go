@@ -1,7 +1,7 @@
 package linuxwireguard
 
 import (
-	"encoding/binary"
+	//"encoding/binary"
 	"fmt"
 	"log"
 	"net"
@@ -84,7 +84,7 @@ func (t *WireguardTunnel) Close() error {
 	return nil
 }
 
-func (t *WireguardTunnel) setPeer(p *spec.Peer) error {
+func (t *WireguardTunnel) setorupdatePeer(p *spec.Peer) error {
 	u := p.GetUnderlayLinuxKernelWireguard()
 	o, err := exec.Command("wg", "set", t.link.Attrs().Name, "peer", u.GetPublicKey().EncodeBase64(), "allowed-ips", p.GetAddress()[0].Format(), "endpoint", u.GetEndpoint().Format(), "persistent-keepalive", "10").CombinedOutput()
 	if err != nil {
@@ -139,25 +139,44 @@ func (t *WireguardTunnel) UpdatePeers(peersDiff []status.PeerDiffrence) {
 			fmt.Println("unknown underlay, skipping...", p)
 			continue
 		}
-		if p.Add {
-			fmt.Println("adding")
-			if err := t.setPeer(p.Peer); err != nil {
-				log.Println(err)
+		switch p.Diff {
+		case status.DiffTypeAdd:
+			{
+				fmt.Println("adding")
+				if err := t.setorupdatePeer(p.Peer); err != nil {
+					log.Println(err)
+				}
+				if err := t.addRoute(p.Peer); err != nil {
+					log.Println(err)
+				}
 			}
-			if err := t.addRoute(p.Peer); err != nil {
-				log.Println(err)
+		case status.DiffTypeDelete:
+			{
+				if err := t.delPeer(p.Peer); err != nil {
+					log.Println(err)
+				}
+				if err := t.delRoute(p.Peer); err != nil {
+					log.Println(err)
+				}
 			}
-		} else {
-			if err := t.delPeer(p.Peer); err != nil {
-				log.Println(err)
-			}
-			if err := t.delRoute(p.Peer); err != nil {
-				log.Println(err)
+		case status.DiffTypeChange:
+			{
+				fmt.Println("adding")
+				if err := t.setorupdatePeer(p.Peer); err != nil {
+					log.Println(err)
+				}
+				if err := t.delRoute(p.Peer); err != nil {
+					log.Println(err)
+				}
+				if err := t.addRoute(p.Peer); err != nil {
+					log.Println(err)
+				}
 			}
 		}
 	}
 }
 
+/*
 func generateLinkLocalV6(address net.IP) net.IP {
 	linklocalv6 := make(net.IP, 16)
 	if v4 := address.To4(); v4 != nil {
@@ -176,6 +195,7 @@ func generateLinkLocalV6(address net.IP) net.IP {
 	}
 	return linklocalv6
 }
+*/
 
 func (t *WireguardTunnel) SetAddress(address net.IPNet) error {
 	_, m := address.Mask.Size()

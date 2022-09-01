@@ -6,6 +6,7 @@ require (
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/envoyproxy/protoc-gen-validate v0.1.0
 	github.com/vishvananda/netlink v1.1.1-0.20211118161826-650dca95af54
+	go.uber.org/zap v1.23.0
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
 	golang.zx2c4.com/wireguard v0.0.0-20220703234212-c31a7b1ab478
 	google.golang.org/grpc v1.48.0
@@ -27,6 +28,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	golang.org/x/text v0.3.7 // indirect

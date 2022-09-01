@@ -14,8 +14,20 @@ type FrrPeerDiffrence struct {
 	PeerDiffrence
 }
 
+// DiffType is a peer changes, enum of Add,Delete,Change
+type DiffType string
+
+const (
+	//DiffTypeAdd shows this node is added and was not exist before
+	DiffTypeAdd = DiffType("Add")
+	//DiffTypeDelete shows this node is deleted and existed before
+	DiffTypeDelete = DiffType("Delete")
+	//DiffTypeChange shows some settings of this node is changed and existed before
+	DiffTypeChange = DiffType("Change")
+)
+
 type PeerDiffrence struct {
-	Add  bool
+	Diff DiffType
 	Peer *spec.Peer
 }
 
@@ -49,6 +61,15 @@ func (p *Peers) find(name string) (*spec.Peer, error) {
 	return nil, fmt.Errorf("not found")
 }
 
+func (p *Peers) haveEqualName(q *spec.Peer) bool {
+	for _, r := range p.peers.GetPeers() {
+		if r.GetName() == q.GetName() {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Peers) haveEqual(q *spec.Peer) bool {
 	for _, r := range p.peers.GetPeers() {
 		if proto.Equal(r, q) {
@@ -60,7 +81,7 @@ func (p *Peers) haveEqual(q *spec.Peer) bool {
 
 func (p *Peers) createOrUpdateByName(q *spec.Peer) {
 	for i, r := range p.peers.GetPeers() {
-		if r.Name == q.GetName() {
+		if r.GetName() == q.GetName() {
 			p.peers.Peers[i] = q
 			return
 		}
@@ -80,14 +101,19 @@ func (c *ClientStatus) UpdatePeers(peers *Peers) ([]PeerDiffrence, error) {
 	ret := make([]PeerDiffrence, 0)
 	//現在は存在するが次存在しないもの
 	for i, q := range c.Peers.peers.GetPeers() {
-		if !peers.haveEqual(q) {
-			ret = append(ret, PeerDiffrence{Add: false, Peer: c.Peers.peers.GetPeers()[i]})
+		//現在と次のどちらにも存在するが名前以外の何かが変わったもの
+		if peers.haveEqualName(q) && !peers.haveEqual(q) {
+			ret = append(ret, PeerDiffrence{Diff: DiffTypeChange, Peer: peers.peers.GetPeers()[i]})
+		}
+		if !peers.haveEqualName(q) && !peers.haveEqual(q) {
+			ret = append(ret, PeerDiffrence{Diff: DiffTypeDelete, Peer: c.Peers.peers.GetPeers()[i]})
 		}
 	}
 	//次存在するが現在存在しない
 	for i, q := range peers.peers.GetPeers() {
-		if !c.Peers.haveEqual(q) {
-			ret = append(ret, PeerDiffrence{Add: true, Peer: peers.peers.GetPeers()[i]})
+		//changeは省く
+		if !c.Peers.haveEqualName(q) && !c.Peers.haveEqual(q) {
+			ret = append(ret, PeerDiffrence{Diff: DiffTypeAdd, Peer: peers.peers.GetPeers()[i]})
 		}
 	}
 	c.Peers.peers = peers.peers

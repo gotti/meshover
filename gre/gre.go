@@ -9,9 +9,11 @@ import (
 	"github.com/gotti/meshover/spec"
 	"github.com/gotti/meshover/status"
 	"github.com/vishvananda/netlink"
+	"go.uber.org/zap"
 )
 
 type GreStatus struct {
+	log     *zap.Logger
 	counter int
 	selfIP  net.IP
 	tunnels []*GreTunnel
@@ -28,8 +30,8 @@ var (
 	errFileExists = fmt.Errorf("tunnel file exists")
 )
 
-func NewGreInstance(selfIP net.IP) *GreStatus {
-	return &GreStatus{selfIP: selfIP}
+func NewGreInstance(log *zap.Logger, selfIP net.IP) *GreStatus {
+	return &GreStatus{log: log, selfIP: selfIP}
 }
 
 func addressCIDRArrayToIPNetArray(a []*spec.AddressCIDR) []net.IPNet {
@@ -49,7 +51,7 @@ func (g *GreStatus) addTunnelPeer(p *status.PeerDiffrence) error {
 		Local:     g.selfIP,
 		Remote:    p.Peer.GetAddress()[0].ToNetIPNet().IP,
 	}
-	fmt.Printf("local=%s, remote=%s, device=%s\n", g.selfIP, p.Peer.GetAddress(), gretun.LinkAttrs.Name)
+	g.log.Debug("connection info", zap.String("self", g.selfIP.String()), zap.String("target", p.Peer.GetAddress()[0].Format()), zap.String("tun", gretun.LinkAttrs.Name))
 	if err := netlink.LinkAdd(gretun); err != nil {
 		if strings.Contains(err.Error(), "file exists") {
 			if err := netlink.LinkDel(gretun); err != nil {
@@ -69,6 +71,36 @@ func (g *GreStatus) addTunnelPeer(p *status.PeerDiffrence) error {
 		fmt.Printf("%+v", t)
 	}
 	g.counter++
+	return nil
+}
+
+func (g *GreStatus) searchByHostName(hostName string) *GreTunnel {
+	for _, d := range g.tunnels {
+		if d.peerName == hostName {
+			return d
+		}
+	}
+	return nil
+}
+
+func (g *GreStatus) updateTunnelPeer(p *status.PeerDiffrence) error {
+	searched := g.searchByHostName(p.Peer.GetName())
+	if searched == nil {
+		err := fmt.Errorf("update failed, not found such peer, peerName=%s", p.Peer.GetName())
+		g.log.Error("update faled", zap.Error(err))
+		return err
+	}
+	attr := netlink.NewLinkAttrs()
+	attr.Name = searched.TunName
+	gretun := &netlink.Gretun{
+		LinkAttrs: attr,
+		Local:     g.selfIP,
+		Remote:    p.Peer.GetAddress()[0].ToNetIPNet().IP,
+	}
+	if err := netlink.LinkModify(gretun); err != nil {
+		return fmt.Errorf("failed to modify link, err=%w", err)
+	}
+	searched.link = gretun
 	return nil
 }
 
@@ -100,21 +132,29 @@ func (g *GreStatus) delTunnelPeer(p *status.PeerDiffrence) {
 
 func (g *GreStatus) UpdatePeers(peersDiff []status.PeerDiffrence) {
 	for _, p := range peersDiff {
-		if p.Add {
-			for {
-				err := g.addTunnelPeer(&p)
-				if err != nil {
-					if err == errFileExists {
-						fmt.Println("tunnel file already exists, try re creating after remove", err)
-						continue
-					} else {
-						log.Fatalln("failed to add tunnel peer", err)
+		switch p.Diff {
+		case status.DiffTypeAdd:
+			{
+				for {
+					err := g.addTunnelPeer(&p)
+					if err != nil {
+						if err == errFileExists {
+							fmt.Println("tunnel file already exists, try re creating after remove", err)
+							continue
+						} else {
+							log.Fatalln("failed to add tunnel peer", err)
+						}
 					}
+					break
 				}
-				break
 			}
-		} else {
-			g.delTunnelPeer(&p)
+		case status.DiffTypeDelete:
+			{
+				g.delTunnelPeer(&p)
+			}
+		case status.DiffTypeChange:
+			{
+			}
 		}
 	}
 }
