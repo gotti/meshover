@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/docker/docker v20.10.17+incompatible
-	github.com/envoyproxy/protoc-gen-validate v0.1.0
+	github.com/envoyproxy/protoc-gen-validate v0.6.7
 	github.com/vishvananda/netlink v1.1.1-0.20211118161826-650dca95af54
 	go.uber.org/zap v1.23.0
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
