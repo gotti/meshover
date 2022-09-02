@@ -198,26 +198,26 @@ func main() {
 					frrdiff := []status.FrrPeerDiffrence{}
 					greInstance.UpdatePeers(diff)
 					for i, d := range diff {
-						oppsite, err := greInstance.FindTunNameByOppositeIP(d.Peer.GetAddress()[0].ToNetIPNet().IP)
+						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetAddress()[0].ToNetIPNet().IP)
 						fmt.Println("opossite", oppsite)
 						if err != nil {
-							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.Peer.GetAddress()[0].ToNetIPNet(), err)
+							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetAddress()[0].ToNetIPNet(), err)
 						}
 						fmt.Println("opposite", oppsite)
 						frrdiff = append(frrdiff, status.FrrPeerDiffrence{PeerDiffrence: diff[i], TunName: oppsite})
 					}
 					sbrdiffs := []iproute.SBRDiff{}
 					for _, d := range diff {
-						oppsite, err := greInstance.FindTunNameByOppositeIP(d.Peer.GetAddress()[0].ToNetIPNet().IP)
+						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetAddress()[0].ToNetIPNet().IP)
 						if err != nil {
-							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.Peer.GetAddress()[0].ToNetIPNet(), err)
+							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetAddress()[0].ToNetIPNet(), err)
 						}
-						sbr := d.Peer.GetSbrOption()
+						sbr := d.NewPeer.GetSbrOption()
 						if sbr == nil {
 							continue
 						}
 						sbrdiff := iproute.SBRDiff{
-							HostName:  d.Peer.GetName(),
+							HostName:  d.NewPeer.GetName(),
 							Diff:      d.Diff,
 							TunName:   oppsite,
 							Gathering: []net.IPNet{},

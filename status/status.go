@@ -28,7 +28,8 @@ const (
 
 type PeerDiffrence struct {
 	Diff DiffType
-	Peer *spec.Peer
+	NewPeer *spec.Peer
+	OldPeer *spec.Peer
 }
 
 type Peers struct {
@@ -103,17 +104,17 @@ func (c *ClientStatus) UpdatePeers(peers *Peers) ([]PeerDiffrence, error) {
 	for i, q := range c.Peers.peers.GetPeers() {
 		//現在と次のどちらにも存在するが名前以外の何かが変わったもの
 		if peers.haveEqualName(q) && !peers.haveEqual(q) {
-			ret = append(ret, PeerDiffrence{Diff: DiffTypeChange, Peer: peers.peers.GetPeers()[i]})
+			ret = append(ret, PeerDiffrence{Diff: DiffTypeChange, NewPeer: peers.peers.GetPeers()[i], OldPeer: c.Peers.peers.Peers[i]})
 		}
 		if !peers.haveEqualName(q) && !peers.haveEqual(q) {
-			ret = append(ret, PeerDiffrence{Diff: DiffTypeDelete, Peer: c.Peers.peers.GetPeers()[i]})
+			ret = append(ret, PeerDiffrence{Diff: DiffTypeDelete, OldPeer: c.Peers.peers.GetPeers()[i]})
 		}
 	}
 	//次存在するが現在存在しない
 	for i, q := range peers.peers.GetPeers() {
 		//changeは省く
 		if !c.Peers.haveEqualName(q) && !c.Peers.haveEqual(q) {
-			ret = append(ret, PeerDiffrence{Diff: DiffTypeAdd, Peer: peers.peers.GetPeers()[i]})
+			ret = append(ret, PeerDiffrence{Diff: DiffTypeAdd, NewPeer: peers.peers.GetPeers()[i]})
 		}
 	}
 	c.Peers.peers = peers.peers

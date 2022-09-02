@@ -2,6 +2,7 @@ syntax = "proto3";
 option go_package = "./spec";
 
 import "protoc-gen-validate/validate/validate.proto";
+import "proto/ip.proto";
 
 service ControlPlaneService {
   rpc ListPeers(ListPeersRequest) returns (ListPeersResponse);
@@ -10,38 +11,6 @@ service ControlPlaneService {
   rpc UpdatePeerStatus(UpdatePeerStatusRequest) returns (UpdatePeerStatusResponse);
 }
 
-message AddressIPv4{
-  string ipaddress = 1 [(validate.rules).string.ipv4 = true];
-}
-message AddressIPv6{
-  string ipaddress = 1 [(validate.rules).string.ipv6 = true];
-}
-
-message Address {
-  oneof ipaddress {
-    option (validate.required) = true;
-    AddressIPv4 addressIPv4 = 2;
-    AddressIPv6 addressIPv6 = 3;
-  }
-}
-
-message AddressCIDRIPv4 {
-  AddressIPv4 ipaddress = 1 [(validate.rules).message.required = true];
-  int32 mask = 2 [(validate.rules).int32 = {gte: 0, lte:32}];
-}
-
-message AddressCIDRIPv6 {
-  AddressIPv6 ipaddress = 1 [(validate.rules).message.required = true];
-  int32 mask = 2 [(validate.rules).int32 = {gte: 0, lte:128}];
-}
-
-message AddressCIDR {
-  oneof addresscidr {
-    option (validate.required) = true;
-    AddressCIDRIPv4 addressCIDRIPv4 = 2;
-    AddressCIDRIPv6 addressCIDRIPv6 = 3;
-  }
-}
 
 message AddressAndPort {
   Address ipaddress = 1;

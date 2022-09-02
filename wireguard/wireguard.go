@@ -55,26 +55,26 @@ func (t *WireguardTunnel) setIpc(ipc string) {
 func (t *WireguardTunnel) UpdatePeers(peersDiff []status.PeerDiffrence) {
 	var conf string
 	for _, p := range peersDiff {
-		ca := p.Peer.GetUnderlayLinuxKernelWireguard()
+		ca := p.NewPeer.GetUnderlayLinuxKernelWireguard()
 		if ca == nil {
 			continue
 		}
 		conf += fmt.Sprintf("public_key=%x\n", ca.GetPublicKey())
 		conf += fmt.Sprintf("endpoint=%s\n", ca.GetEndpoint().GetEndpointAddress())
-		conf += fmt.Sprintf("allowed_ip=%s/32\n", p.Peer.GetAddress().GetEndpointAddress())
+		conf += fmt.Sprintf("allowed_ip=%s/32\n", p.NewPeer.GetAddress().GetEndpointAddress())
 		conf += fmt.Sprintf("persistent_keepalive_interval=10\n")
 		if !p.Add {
 			conf += fmt.Sprintf("remove=true\n")
 		}
 		route := new(netlink.Route)
-		_, n, err := net.ParseCIDR(fmt.Sprintf("%s/32", p.Peer.GetAddress().GetEndpointAddress()))
+		_, n, err := net.ParseCIDR(fmt.Sprintf("%s/32", p.NewPeer.GetAddress().GetEndpointAddress()))
 		if err != nil {
 			log.Printf("failed to parse cidr, err=%s\n", err)
 		}
 		route.Dst = n
 		route.LinkIndex = t.link.Attrs().Index
 		if err := netlink.RouteAdd(route); err != nil {
-			log.Printf("failed to add route to %s, err=%s", p.Peer.GetAddress().GetEndpointAddress(), err)
+			log.Printf("failed to add route to %s, err=%s", p.NewPeer.GetAddress().GetEndpointAddress(), err)
 		}
 	}
 	fmt.Println("applied", conf)
