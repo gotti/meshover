@@ -19,8 +19,11 @@ func isEqualPeerDiffArray(a, b []PeerDiffrence) error {
 		if d.Diff != b[i].Diff {
 			return fmt.Errorf("in array of diff, add not match")
 		}
-		if !proto.Equal(d.Peer, b[i].Peer) {
-			return fmt.Errorf("in array of diff, %+v and %+v not matched", d.Peer, b[i].Peer)
+		if !proto.Equal(d.NewPeer, b[i].NewPeer) {
+			return fmt.Errorf("NewPeer, in array of diff, %+v and %+v not matched", d.NewPeer, b[i].NewPeer)
+		}
+		if !proto.Equal(d.OldPeer, b[i].OldPeer) {
+			return fmt.Errorf("OldPeer, in array of diff, %+v and %+v not matched", d.NewPeer, b[i].NewPeer)
 		}
 	}
 	return nil
@@ -157,7 +160,7 @@ func TestUpdatePeers(t *testing.T) {
 			expectedDiff: []PeerDiffrence{
 				{
 					Diff: DiffTypeAdd,
-					Peer: peerB,
+					NewPeer: peerB,
 				},
 			},
 		},
@@ -183,7 +186,7 @@ func TestUpdatePeers(t *testing.T) {
 			expectedDiff: []PeerDiffrence{
 				{
 					Diff: DiffTypeDelete,
-					Peer: peerB,
+					OldPeer: peerB,
 				},
 			},
 		},
@@ -228,7 +231,8 @@ func TestUpdatePeers(t *testing.T) {
 			expectedDiff: []PeerDiffrence{
 				{
 					Diff: DiffTypeChange,
-					Peer: peerB2,
+					OldPeer: peerB,
+					NewPeer: peerB2,
 				},
 			},
 		},

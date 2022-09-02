@@ -135,41 +135,41 @@ func (t *WireguardTunnel) delRoute(p *spec.Peer) error {
 
 func (t *WireguardTunnel) UpdatePeers(peersDiff []status.PeerDiffrence) {
 	for _, p := range peersDiff {
-		if ca := p.Peer.GetUnderlayLinuxKernelWireguard(); ca == nil {
+		if ca := p.NewPeer.GetUnderlayLinuxKernelWireguard(); ca == nil {
 			fmt.Println("unknown underlay, skipping...", p)
 			continue
 		}
 		switch p.Diff {
 		case status.DiffTypeAdd:
 			{
-				if err := t.setPeer(p.Peer); err != nil {
+				if err := t.setPeer(p.NewPeer); err != nil {
 					log.Println(err)
 				}
-				if err := t.addRoute(p.Peer); err != nil {
+				if err := t.addRoute(p.NewPeer); err != nil {
 					log.Println(err)
 				}
 			}
 		case status.DiffTypeDelete:
 			{
-				if err := t.delPeer(p.Peer); err != nil {
+				if err := t.delPeer(p.OldPeer); err != nil {
 					log.Println(err)
 				}
-				if err := t.delRoute(p.Peer); err != nil {
+				if err := t.delRoute(p.OldPeer); err != nil {
 					log.Println(err)
 				}
 			}
 		case status.DiffTypeChange:
 			{
-				if err := t.delPeer(p.Peer); err != nil {
+				if err := t.delPeer(p.OldPeer); err != nil {
 					log.Println(err)
 				}
-				if err := t.setPeer(p.Peer); err != nil {
+				if err := t.delRoute(p.OldPeer); err != nil {
 					log.Println(err)
 				}
-				if err := t.delRoute(p.Peer); err != nil {
+				if err := t.setPeer(p.NewPeer); err != nil {
 					log.Println(err)
 				}
-				if err := t.addRoute(p.Peer); err != nil {
+				if err := t.addRoute(p.NewPeer); err != nil {
 					log.Println(err)
 				}
 			}
