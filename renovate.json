@@ -1,6 +1,16 @@
 {
+  "labels": ["dependencies", "renovate"],
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:base"
+  ],
+  "packageRules": [
+    {
+      "matchPaths": ["./.github/workflows/**", "**/go.mod", "**/package.json"],
+      "automerge": true,
+      "major": {
+        "automerge": false
+      }
+    }
   ]
 }
