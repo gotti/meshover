@@ -20,4 +20,4 @@ jobs:
       -
         name: build
         run: |
-          make build
+          make build-ci

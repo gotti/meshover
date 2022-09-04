@@ -1,6 +1,8 @@
 .PHONY: proto build deploy
 
-build: proto
+build: proto build-ci
+
+build-ci:
 	CGO_ENABLED=0 go build -o client ./cmd/client/main.go
 	CGO_ENABLED=0 go build -o meshserver ./cmd/server/main.go
 	CGO_ENABLED=0 go build -o exporter ./cmd/exporter/main.go

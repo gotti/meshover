@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"github.com/docker/docker/api/types"
@@ -37,7 +36,6 @@ type FrrInstance struct {
 	configDir   string
 	containerID string
 	client      *client.Client
-	SocketDir   string
 }
 
 type frrPeerConfig struct {
@@ -60,19 +58,13 @@ func NewInstance(ctx context.Context, asn *spec.ASN, config FrrInstanceConfig) (
 		return nil, fmt.Errorf("failed to create tempdir, err=%w", err)
 	}
 
-	return &FrrInstance{ctx: ctx, asn: asn, frrConfig: config, configDir: d, SocketDir: s}, nil
+	return &FrrInstance{ctx: ctx, asn: asn, frrConfig: config, configDir: d}, nil
 }
 
 func (f *FrrInstance) Clean() error {
 	err := f.client.ContainerKill(f.ctx, f.containerID, "SIGKILL")
 	if err != nil {
 		return fmt.Errorf("failed to clean frr container, err=%w", err)
-	}
-
-	if strings.HasPrefix(f.SocketDir, "/tmp") {
-		if err := os.RemoveAll(f.SocketDir); err != nil {
-			return fmt.Errorf("failed to clean frr socketdir, err=%w", err)
-		}
 	}
 	return nil
 }
