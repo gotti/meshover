@@ -35,22 +35,22 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on MinimumPeerStatus with the rules defined
+// Validate checks the field values on MinimumNodeStatus with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
-func (m *MinimumPeerStatus) Validate() error {
+func (m *MinimumNodeStatus) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on MinimumPeerStatus with the rules
+// ValidateAll checks the field values on MinimumNodeStatus with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// MinimumPeerStatusMultiError, or nil if none found.
-func (m *MinimumPeerStatus) ValidateAll() error {
+// MinimumNodeStatusMultiError, or nil if none found.
+func (m *MinimumNodeStatus) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *MinimumPeerStatus) validate(all bool) error {
+func (m *MinimumNodeStatus) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -61,7 +61,7 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 		switch v := interface{}(m.GetLocalAS()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, MinimumPeerStatusValidationError{
+				errors = append(errors, MinimumNodeStatusValidationError{
 					field:  "LocalAS",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -69,7 +69,7 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, MinimumPeerStatusValidationError{
+				errors = append(errors, MinimumNodeStatusValidationError{
 					field:  "LocalAS",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -78,7 +78,7 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetLocalAS()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return MinimumPeerStatusValidationError{
+			return MinimumNodeStatusValidationError{
 				field:  "LocalAS",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -93,7 +93,7 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 			switch v := interface{}(item).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, MinimumPeerStatusValidationError{
+					errors = append(errors, MinimumNodeStatusValidationError{
 						field:  fmt.Sprintf("Addresses[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -101,7 +101,7 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, MinimumPeerStatusValidationError{
+					errors = append(errors, MinimumNodeStatusValidationError{
 						field:  fmt.Sprintf("Addresses[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -110,7 +110,7 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return MinimumPeerStatusValidationError{
+				return MinimumNodeStatusValidationError{
 					field:  fmt.Sprintf("Addresses[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -121,7 +121,7 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 	}
 
 	if m.GetEndpoint() == nil {
-		err := MinimumPeerStatusValidationError{
+		err := MinimumNodeStatusValidationError{
 			field:  "Endpoint",
 			reason: "value is required",
 		}
@@ -135,7 +135,7 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 		switch v := interface{}(m.GetEndpoint()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, MinimumPeerStatusValidationError{
+				errors = append(errors, MinimumNodeStatusValidationError{
 					field:  "Endpoint",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -143,7 +143,7 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, MinimumPeerStatusValidationError{
+				errors = append(errors, MinimumNodeStatusValidationError{
 					field:  "Endpoint",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -152,7 +152,7 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetEndpoint()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return MinimumPeerStatusValidationError{
+			return MinimumNodeStatusValidationError{
 				field:  "Endpoint",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -161,19 +161,19 @@ func (m *MinimumPeerStatus) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return MinimumPeerStatusMultiError(errors)
+		return MinimumNodeStatusMultiError(errors)
 	}
 
 	return nil
 }
 
-// MinimumPeerStatusMultiError is an error wrapping multiple validation errors
-// returned by MinimumPeerStatus.ValidateAll() if the designated constraints
+// MinimumNodeStatusMultiError is an error wrapping multiple validation errors
+// returned by MinimumNodeStatus.ValidateAll() if the designated constraints
 // aren't met.
-type MinimumPeerStatusMultiError []error
+type MinimumNodeStatusMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m MinimumPeerStatusMultiError) Error() string {
+func (m MinimumNodeStatusMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -182,11 +182,11 @@ func (m MinimumPeerStatusMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m MinimumPeerStatusMultiError) AllErrors() []error { return m }
+func (m MinimumNodeStatusMultiError) AllErrors() []error { return m }
 
-// MinimumPeerStatusValidationError is the validation error returned by
-// MinimumPeerStatus.Validate if the designated constraints aren't met.
-type MinimumPeerStatusValidationError struct {
+// MinimumNodeStatusValidationError is the validation error returned by
+// MinimumNodeStatus.Validate if the designated constraints aren't met.
+type MinimumNodeStatusValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -194,24 +194,24 @@ type MinimumPeerStatusValidationError struct {
 }
 
 // Field function returns field value.
-func (e MinimumPeerStatusValidationError) Field() string { return e.field }
+func (e MinimumNodeStatusValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e MinimumPeerStatusValidationError) Reason() string { return e.reason }
+func (e MinimumNodeStatusValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e MinimumPeerStatusValidationError) Cause() error { return e.cause }
+func (e MinimumNodeStatusValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e MinimumPeerStatusValidationError) Key() bool { return e.key }
+func (e MinimumNodeStatusValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e MinimumPeerStatusValidationError) ErrorName() string {
-	return "MinimumPeerStatusValidationError"
+func (e MinimumNodeStatusValidationError) ErrorName() string {
+	return "MinimumNodeStatusValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e MinimumPeerStatusValidationError) Error() string {
+func (e MinimumNodeStatusValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -223,14 +223,14 @@ func (e MinimumPeerStatusValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sMinimumPeerStatus.%s: %s%s",
+		"invalid %sMinimumNodeStatus.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = MinimumPeerStatusValidationError{}
+var _ error = MinimumNodeStatusValidationError{}
 
 var _ interface {
 	Field() string
@@ -238,24 +238,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = MinimumPeerStatusValidationError{}
+} = MinimumNodeStatusValidationError{}
 
-// Validate checks the field values on WireguardStatus with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *WireguardStatus) Validate() error {
+// Validate checks the field values on PeerWireguardStatus with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PeerWireguardStatus) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on WireguardStatus with the rules
+// ValidateAll checks the field values on PeerWireguardStatus with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// WireguardStatusMultiError, or nil if none found.
-func (m *WireguardStatus) ValidateAll() error {
+// PeerWireguardStatusMultiError, or nil if none found.
+func (m *PeerWireguardStatus) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *WireguardStatus) validate(all bool) error {
+func (m *PeerWireguardStatus) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -269,19 +269,19 @@ func (m *WireguardStatus) validate(all bool) error {
 	// no validation rules for RxBytes
 
 	if len(errors) > 0 {
-		return WireguardStatusMultiError(errors)
+		return PeerWireguardStatusMultiError(errors)
 	}
 
 	return nil
 }
 
-// WireguardStatusMultiError is an error wrapping multiple validation errors
-// returned by WireguardStatus.ValidateAll() if the designated constraints
-// aren't met.
-type WireguardStatusMultiError []error
+// PeerWireguardStatusMultiError is an error wrapping multiple validation
+// errors returned by PeerWireguardStatus.ValidateAll() if the designated
+// constraints aren't met.
+type PeerWireguardStatusMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m WireguardStatusMultiError) Error() string {
+func (m PeerWireguardStatusMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -290,11 +290,11 @@ func (m WireguardStatusMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m WireguardStatusMultiError) AllErrors() []error { return m }
+func (m PeerWireguardStatusMultiError) AllErrors() []error { return m }
 
-// WireguardStatusValidationError is the validation error returned by
-// WireguardStatus.Validate if the designated constraints aren't met.
-type WireguardStatusValidationError struct {
+// PeerWireguardStatusValidationError is the validation error returned by
+// PeerWireguardStatus.Validate if the designated constraints aren't met.
+type PeerWireguardStatusValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -302,22 +302,24 @@ type WireguardStatusValidationError struct {
 }
 
 // Field function returns field value.
-func (e WireguardStatusValidationError) Field() string { return e.field }
+func (e PeerWireguardStatusValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e WireguardStatusValidationError) Reason() string { return e.reason }
+func (e PeerWireguardStatusValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e WireguardStatusValidationError) Cause() error { return e.cause }
+func (e PeerWireguardStatusValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e WireguardStatusValidationError) Key() bool { return e.key }
+func (e PeerWireguardStatusValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e WireguardStatusValidationError) ErrorName() string { return "WireguardStatusValidationError" }
+func (e PeerWireguardStatusValidationError) ErrorName() string {
+	return "PeerWireguardStatusValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e WireguardStatusValidationError) Error() string {
+func (e PeerWireguardStatusValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -329,14 +331,14 @@ func (e WireguardStatusValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sWireguardStatus.%s: %s%s",
+		"invalid %sPeerWireguardStatus.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = WireguardStatusValidationError{}
+var _ error = PeerWireguardStatusValidationError{}
 
 var _ interface {
 	Field() string
@@ -344,35 +346,37 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = WireguardStatusValidationError{}
+} = PeerWireguardStatusValidationError{}
 
-// Validate checks the field values on BGPPeerStatus with the rules defined in
+// Validate checks the field values on PeerBGPStatus with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *BGPPeerStatus) Validate() error {
+func (m *PeerBGPStatus) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on BGPPeerStatus with the rules defined
+// ValidateAll checks the field values on PeerBGPStatus with the rules defined
 // in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in BGPPeerStatusMultiError, or
+// result is a list of violation errors wrapped in PeerBGPStatusMultiError, or
 // nil if none found.
-func (m *BGPPeerStatus) ValidateAll() error {
+func (m *PeerBGPStatus) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *BGPPeerStatus) validate(all bool) error {
+func (m *PeerBGPStatus) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
+	// no validation rules for RemoteHostname
+
 	if all {
 		switch v := interface{}(m.GetLocalAS()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, BGPPeerStatusValidationError{
+				errors = append(errors, PeerBGPStatusValidationError{
 					field:  "LocalAS",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -380,7 +384,7 @@ func (m *BGPPeerStatus) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, BGPPeerStatusValidationError{
+				errors = append(errors, PeerBGPStatusValidationError{
 					field:  "LocalAS",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -389,7 +393,7 @@ func (m *BGPPeerStatus) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetLocalAS()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return BGPPeerStatusValidationError{
+			return PeerBGPStatusValidationError{
 				field:  "LocalAS",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -401,7 +405,7 @@ func (m *BGPPeerStatus) validate(all bool) error {
 		switch v := interface{}(m.GetRemoteAS()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, BGPPeerStatusValidationError{
+				errors = append(errors, PeerBGPStatusValidationError{
 					field:  "RemoteAS",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -409,7 +413,7 @@ func (m *BGPPeerStatus) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, BGPPeerStatusValidationError{
+				errors = append(errors, PeerBGPStatusValidationError{
 					field:  "RemoteAS",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -418,7 +422,7 @@ func (m *BGPPeerStatus) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetRemoteAS()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return BGPPeerStatusValidationError{
+			return PeerBGPStatusValidationError{
 				field:  "RemoteAS",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -430,7 +434,7 @@ func (m *BGPPeerStatus) validate(all bool) error {
 		switch v := interface{}(m.GetBgpNeighborAddr()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, BGPPeerStatusValidationError{
+				errors = append(errors, PeerBGPStatusValidationError{
 					field:  "BgpNeighborAddr",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -438,7 +442,7 @@ func (m *BGPPeerStatus) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, BGPPeerStatusValidationError{
+				errors = append(errors, PeerBGPStatusValidationError{
 					field:  "BgpNeighborAddr",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -447,7 +451,7 @@ func (m *BGPPeerStatus) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetBgpNeighborAddr()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return BGPPeerStatusValidationError{
+			return PeerBGPStatusValidationError{
 				field:  "BgpNeighborAddr",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -455,24 +459,22 @@ func (m *BGPPeerStatus) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for RemoteHostName
-
 	// no validation rules for BGPState
 
 	if len(errors) > 0 {
-		return BGPPeerStatusMultiError(errors)
+		return PeerBGPStatusMultiError(errors)
 	}
 
 	return nil
 }
 
-// BGPPeerStatusMultiError is an error wrapping multiple validation errors
-// returned by BGPPeerStatus.ValidateAll() if the designated constraints
+// PeerBGPStatusMultiError is an error wrapping multiple validation errors
+// returned by PeerBGPStatus.ValidateAll() if the designated constraints
 // aren't met.
-type BGPPeerStatusMultiError []error
+type PeerBGPStatusMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m BGPPeerStatusMultiError) Error() string {
+func (m PeerBGPStatusMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -481,11 +483,11 @@ func (m BGPPeerStatusMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m BGPPeerStatusMultiError) AllErrors() []error { return m }
+func (m PeerBGPStatusMultiError) AllErrors() []error { return m }
 
-// BGPPeerStatusValidationError is the validation error returned by
-// BGPPeerStatus.Validate if the designated constraints aren't met.
-type BGPPeerStatusValidationError struct {
+// PeerBGPStatusValidationError is the validation error returned by
+// PeerBGPStatus.Validate if the designated constraints aren't met.
+type PeerBGPStatusValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -493,22 +495,22 @@ type BGPPeerStatusValidationError struct {
 }
 
 // Field function returns field value.
-func (e BGPPeerStatusValidationError) Field() string { return e.field }
+func (e PeerBGPStatusValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e BGPPeerStatusValidationError) Reason() string { return e.reason }
+func (e PeerBGPStatusValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e BGPPeerStatusValidationError) Cause() error { return e.cause }
+func (e PeerBGPStatusValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e BGPPeerStatusValidationError) Key() bool { return e.key }
+func (e PeerBGPStatusValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e BGPPeerStatusValidationError) ErrorName() string { return "BGPPeerStatusValidationError" }
+func (e PeerBGPStatusValidationError) ErrorName() string { return "PeerBGPStatusValidationError" }
 
 // Error satisfies the builtin error interface
-func (e BGPPeerStatusValidationError) Error() string {
+func (e PeerBGPStatusValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -520,14 +522,14 @@ func (e BGPPeerStatusValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sBGPPeerStatus.%s: %s%s",
+		"invalid %sPeerBGPStatus.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = BGPPeerStatusValidationError{}
+var _ error = PeerBGPStatusValidationError{}
 
 var _ interface {
 	Field() string
@@ -535,77 +537,46 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = BGPPeerStatusValidationError{}
+} = PeerBGPStatusValidationError{}
 
-// Validate checks the field values on BGPStatus with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
+// Validate checks the field values on PeerPingStatus with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *BGPStatus) Validate() error {
+func (m *PeerPingStatus) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on BGPStatus with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in BGPStatusMultiError, or nil
-// if none found.
-func (m *BGPStatus) ValidateAll() error {
+// ValidateAll checks the field values on PeerPingStatus with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PeerPingStatusMultiError,
+// or nil if none found.
+func (m *PeerPingStatus) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *BGPStatus) validate(all bool) error {
+func (m *PeerPingStatus) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	for idx, item := range m.GetBGPPeers() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, BGPStatusValidationError{
-						field:  fmt.Sprintf("BGPPeers[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, BGPStatusValidationError{
-						field:  fmt.Sprintf("BGPPeers[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return BGPStatusValidationError{
-					field:  fmt.Sprintf("BGPPeers[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
+	// no validation rules for AverageRTT
 
 	if len(errors) > 0 {
-		return BGPStatusMultiError(errors)
+		return PeerPingStatusMultiError(errors)
 	}
 
 	return nil
 }
 
-// BGPStatusMultiError is an error wrapping multiple validation errors returned
-// by BGPStatus.ValidateAll() if the designated constraints aren't met.
-type BGPStatusMultiError []error
+// PeerPingStatusMultiError is an error wrapping multiple validation errors
+// returned by PeerPingStatus.ValidateAll() if the designated constraints
+// aren't met.
+type PeerPingStatusMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m BGPStatusMultiError) Error() string {
+func (m PeerPingStatusMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -614,11 +585,11 @@ func (m BGPStatusMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m BGPStatusMultiError) AllErrors() []error { return m }
+func (m PeerPingStatusMultiError) AllErrors() []error { return m }
 
-// BGPStatusValidationError is the validation error returned by
-// BGPStatus.Validate if the designated constraints aren't met.
-type BGPStatusValidationError struct {
+// PeerPingStatusValidationError is the validation error returned by
+// PeerPingStatus.Validate if the designated constraints aren't met.
+type PeerPingStatusValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -626,22 +597,22 @@ type BGPStatusValidationError struct {
 }
 
 // Field function returns field value.
-func (e BGPStatusValidationError) Field() string { return e.field }
+func (e PeerPingStatusValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e BGPStatusValidationError) Reason() string { return e.reason }
+func (e PeerPingStatusValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e BGPStatusValidationError) Cause() error { return e.cause }
+func (e PeerPingStatusValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e BGPStatusValidationError) Key() bool { return e.key }
+func (e PeerPingStatusValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e BGPStatusValidationError) ErrorName() string { return "BGPStatusValidationError" }
+func (e PeerPingStatusValidationError) ErrorName() string { return "PeerPingStatusValidationError" }
 
 // Error satisfies the builtin error interface
-func (e BGPStatusValidationError) Error() string {
+func (e PeerPingStatusValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -653,14 +624,14 @@ func (e BGPStatusValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sBGPStatus.%s: %s%s",
+		"invalid %sPeerPingStatus.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = BGPStatusValidationError{}
+var _ error = PeerPingStatusValidationError{}
 
 var _ interface {
 	Field() string
@@ -668,7 +639,196 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = BGPStatusValidationError{}
+} = PeerPingStatusValidationError{}
+
+// Validate checks the field values on NodePeersStatus with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *NodePeersStatus) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on NodePeersStatus with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// NodePeersStatusMultiError, or nil if none found.
+func (m *NodePeersStatus) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *NodePeersStatus) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for RemoteHostname
+
+	if all {
+		switch v := interface{}(m.GetPingStatus()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, NodePeersStatusValidationError{
+					field:  "PingStatus",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, NodePeersStatusValidationError{
+					field:  "PingStatus",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPingStatus()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return NodePeersStatusValidationError{
+				field:  "PingStatus",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetWireguardStatus()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, NodePeersStatusValidationError{
+					field:  "WireguardStatus",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, NodePeersStatusValidationError{
+					field:  "WireguardStatus",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWireguardStatus()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return NodePeersStatusValidationError{
+				field:  "WireguardStatus",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetBgpStatus()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, NodePeersStatusValidationError{
+					field:  "BgpStatus",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, NodePeersStatusValidationError{
+					field:  "BgpStatus",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetBgpStatus()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return NodePeersStatusValidationError{
+				field:  "BgpStatus",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return NodePeersStatusMultiError(errors)
+	}
+
+	return nil
+}
+
+// NodePeersStatusMultiError is an error wrapping multiple validation errors
+// returned by NodePeersStatus.ValidateAll() if the designated constraints
+// aren't met.
+type NodePeersStatusMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m NodePeersStatusMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m NodePeersStatusMultiError) AllErrors() []error { return m }
+
+// NodePeersStatusValidationError is the validation error returned by
+// NodePeersStatus.Validate if the designated constraints aren't met.
+type NodePeersStatusValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e NodePeersStatusValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e NodePeersStatusValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e NodePeersStatusValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e NodePeersStatusValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e NodePeersStatusValidationError) ErrorName() string { return "NodePeersStatusValidationError" }
+
+// Error satisfies the builtin error interface
+func (e NodePeersStatusValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sNodePeersStatus.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = NodePeersStatusValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = NodePeersStatusValidationError{}
 
 // Validate checks the field values on StatusManagerPeerStatus with the rules
 // defined in the proto definition for this message. If any rules are
@@ -703,9 +863,9 @@ func (m *StatusManagerPeerStatus) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetPeerStatus() == nil {
+	if m.GetNodeStatus() == nil {
 		err := StatusManagerPeerStatusValidationError{
-			field:  "PeerStatus",
+			field:  "NodeStatus",
 			reason: "value is required",
 		}
 		if !all {
@@ -715,11 +875,11 @@ func (m *StatusManagerPeerStatus) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetPeerStatus()).(type) {
+		switch v := interface{}(m.GetNodeStatus()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, StatusManagerPeerStatusValidationError{
-					field:  "PeerStatus",
+					field:  "NodeStatus",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -727,100 +887,54 @@ func (m *StatusManagerPeerStatus) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, StatusManagerPeerStatusValidationError{
-					field:  "PeerStatus",
+					field:  "NodeStatus",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetPeerStatus()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetNodeStatus()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return StatusManagerPeerStatusValidationError{
-				field:  "PeerStatus",
+				field:  "NodeStatus",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
 	}
 
-	if m.GetWireguardStatus() == nil {
-		err := StatusManagerPeerStatusValidationError{
-			field:  "WireguardStatus",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	for idx, item := range m.GetPeerStatus() {
+		_, _ = idx, item
 
-	if all {
-		switch v := interface{}(m.GetWireguardStatus()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, StatusManagerPeerStatusValidationError{
-					field:  "WireguardStatus",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, StatusManagerPeerStatusValidationError{
+						field:  fmt.Sprintf("PeerStatus[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, StatusManagerPeerStatusValidationError{
+						field:  fmt.Sprintf("PeerStatus[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-		case interface{ Validate() error }:
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, StatusManagerPeerStatusValidationError{
-					field:  "WireguardStatus",
+				return StatusManagerPeerStatusValidationError{
+					field:  fmt.Sprintf("PeerStatus[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetWireguardStatus()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return StatusManagerPeerStatusValidationError{
-				field:  "WireguardStatus",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
-	if m.GetBgpStatus() == nil {
-		err := StatusManagerPeerStatusValidationError{
-			field:  "BgpStatus",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetBgpStatus()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, StatusManagerPeerStatusValidationError{
-					field:  "BgpStatus",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, StatusManagerPeerStatusValidationError{
-					field:  "BgpStatus",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetBgpStatus()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return StatusManagerPeerStatusValidationError{
-				field:  "BgpStatus",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
 	}
 
 	if len(errors) > 0 {
