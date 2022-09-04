@@ -385,6 +385,53 @@ func (*AddressCIDR_AddressCIDRIPv4) isAddressCIDR_Addresscidr() {}
 
 func (*AddressCIDR_AddressCIDRIPv6) isAddressCIDR_Addresscidr() {}
 
+type ASN struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Number uint32 `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
+}
+
+func (x *ASN) Reset() {
+	*x = ASN{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_ip_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ASN) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ASN) ProtoMessage() {}
+
+func (x *ASN) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_ip_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ASN.ProtoReflect.Descriptor instead.
+func (*ASN) Descriptor() ([]byte, []int) {
+	return file_proto_ip_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ASN) GetNumber() uint32 {
+	if x != nil {
+		return x.Number
+	}
+	return 0
+}
+
 var File_proto_ip_proto protoreflect.FileDescriptor
 
 var file_proto_ip_proto_rawDesc = []byte{
@@ -429,8 +476,10 @@ var file_proto_ip_proto_rawDesc = []byte{
 	0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x43, 0x49, 0x44,
 	0x52, 0x49, 0x50, 0x76, 0x36, 0x48, 0x00, 0x52, 0x0f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
 	0x43, 0x49, 0x44, 0x52, 0x49, 0x50, 0x76, 0x36, 0x42, 0x12, 0x0a, 0x0b, 0x61, 0x64, 0x64, 0x72,
-	0x65, 0x73, 0x73, 0x63, 0x69, 0x64, 0x72, 0x12, 0x03, 0xf8, 0x42, 0x01, 0x42, 0x08, 0x5a, 0x06,
-	0x2e, 0x2f, 0x73, 0x70, 0x65, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x73, 0x73, 0x63, 0x69, 0x64, 0x72, 0x12, 0x03, 0xf8, 0x42, 0x01, 0x22, 0x1d, 0x0a, 0x03,
+	0x41, 0x53, 0x4e, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0d, 0x52, 0x06, 0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x42, 0x08, 0x5a, 0x06, 0x2e,
+	0x2f, 0x73, 0x70, 0x65, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -445,7 +494,7 @@ func file_proto_ip_proto_rawDescGZIP() []byte {
 	return file_proto_ip_proto_rawDescData
 }
 
-var file_proto_ip_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proto_ip_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proto_ip_proto_goTypes = []interface{}{
 	(*AddressIPv4)(nil),     // 0: AddressIPv4
 	(*AddressIPv6)(nil),     // 1: AddressIPv6
@@ -453,6 +502,7 @@ var file_proto_ip_proto_goTypes = []interface{}{
 	(*AddressCIDRIPv4)(nil), // 3: AddressCIDRIPv4
 	(*AddressCIDRIPv6)(nil), // 4: AddressCIDRIPv6
 	(*AddressCIDR)(nil),     // 5: AddressCIDR
+	(*ASN)(nil),             // 6: ASN
 }
 var file_proto_ip_proto_depIdxs = []int32{
 	0, // 0: Address.addressIPv4:type_name -> AddressIPv4
@@ -546,6 +596,18 @@ func file_proto_ip_proto_init() {
 				return nil
 			}
 		}
+		file_proto_ip_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ASN); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_proto_ip_proto_msgTypes[2].OneofWrappers = []interface{}{
 		(*Address_AddressIPv4)(nil),
@@ -561,7 +623,7 @@ func file_proto_ip_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_ip_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

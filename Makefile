@@ -5,7 +5,7 @@ build: proto
 	CGO_ENABLED=0 go build -o meshserver ./cmd/server/main.go
 
 proto:
-	protoc  --go_out=./ --go-grpc_out=./ -I ./ proto/controlplane.proto proto/ip.proto --validate_out="lang=go:./"
+	protoc  --go_out=./ --go-grpc_out=./ -I ./ proto/statusmanager.proto proto/controlplane.proto proto/ip.proto --validate_out="lang=go:./"
 
 deploy: build
 	scp ./meshserver meshover:~/
