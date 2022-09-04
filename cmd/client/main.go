@@ -18,6 +18,7 @@ import (
 	"github.com/gotti/meshover/grpcclient"
 	"github.com/gotti/meshover/iproute"
 	"github.com/gotti/meshover/linuxwireguard"
+	"github.com/gotti/meshover/pkg/statuspusher"
 	"github.com/gotti/meshover/spec"
 	"github.com/gotti/meshover/status"
 	"github.com/vishvananda/netlink"
@@ -32,6 +33,7 @@ var frrVtyshConfig string
 
 var (
 	controlserver     = flag.String("controlserver", "", "localhost:8080")
+	statusserver      = flag.String("statusserver", "", "localhost:8080")
 	hostName          = flag.String("hostname", "", "hostname")
 	capabl            = flag.String("cap", "", "wireguard,linuxkernelwireguard")
 	staticRoutes      = flag.String("static", "", "192.168.0.0/16")
@@ -135,11 +137,11 @@ func main() {
 	}
 
 	//set got meshover ip before
-	if err := tunnel.SetAddress(client.OverlayIP); err != nil {
+	if err := tunnel.SetAddress(*client.OverlayIP[0]); err != nil {
 		panicError(logger, "failed to set address", err)
 	}
 	tunnel.SetListenPort(12912)
-	stat.IPAddr = net.IPNet{IP: client.OverlayIP.IP, Mask: net.IPv4Mask(255, 255, 255, 255)}
+	stat.IPAddr = net.IPNet{IP: client.OverlayIP[0].IP, Mask: net.IPv4Mask(255, 255, 255, 255)}
 	stat.ASN = asn
 
 	term := make(chan os.Signal, 1)
@@ -156,7 +158,7 @@ func main() {
 	greInstance := gre.NewGreInstance(logger, stat.IPAddr.IP)
 	defer gre.Clean()
 
-	conf := frr.NewFrrConfig(*hostName, client.OverlayIP.IP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
+	conf := frr.NewFrrConfig(*hostName, client.OverlayIP[0].IP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
 	f, err := frr.NewInstance(ctx, asn, conf)
 	if err != nil {
 		panicError(logger, "failed to create frr instance", err)
@@ -168,7 +170,7 @@ func main() {
 		}
 	}()
 	go func() {
-		if f.Up(ctx); err != nil {
+		if err := f.Up(ctx); err != nil {
 			panicError(logger, "failed to up frr instance", err)
 		}
 	}()
@@ -179,6 +181,8 @@ func main() {
 			panicError(logger, "failed to clean iproute instance", err)
 		}
 	}()
+
+	statusBGP := make(chan []*spec.PeerBGPStatus, 1)
 
 	go func() {
 		for {
@@ -238,6 +242,36 @@ func main() {
 		}
 	}()
 	go func() {
+		statusClient, err := statuspusher.NewClient(ctx, logger, *statusserver)
+		if err != nil {
+			panicError(logger, "failed to create statuspusher", err)
+		}
+		ticker := time.NewTicker(10 * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				s := receiveFromChan(logger, statusBGP)
+				req := &spec.RegisterStatusRequest{
+					Status: &spec.StatusManagerPeerStatus{
+						Hostname: *hostName,
+						NodeStatus: &spec.MinimumNodeStatus{
+							LocalAS: asn,
+							Addresses: []*spec.AddressCIDR{
+								spec.NewAddressCIDR(*client.OverlayIP[0]),
+							},
+							Endpoint: spec.NewAddress(addrs[0].IP),
+						},
+						PeerStatus: s,
+					},
+				}
+				if err := statusClient.RegisterStatus(ctx, req); err != nil {
+					logger.Error("failed to register status", zap.Error(err))
+				}
+			}
+		}
+	}()
+
+	go func() {
 		for {
 			select {
 			case p := <-c:
@@ -247,8 +281,49 @@ func main() {
 			}
 		}
 	}()
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				stat, err := f.GetBGPStatus(ctx)
+				if err != nil {
+					logger.Error("failed to get bgp status", zap.Error(err))
+				}
+				select {
+				case statusBGP <- stat:
+					logger.Debug("bgp status updated")
+				default:
+				}
+			}
+		}
+	}()
 
 	select {
 	case <-term:
 	}
+}
+
+func receiveFromChan(logger *zap.Logger, bgpChan <-chan []*spec.PeerBGPStatus) []*spec.NodePeersStatus {
+	ret := []*spec.NodePeersStatus{}
+	remotesMap := map[string]*spec.NodePeersStatus{}
+	select {
+	case bg := <-bgpChan:
+		{
+			for _, b := range bg {
+				_, ok := remotesMap[b.GetRemoteHostname()]
+				if !ok {
+					remotesMap[b.GetRemoteHostname()] = &spec.NodePeersStatus{RemoteHostname: b.GetRemoteHostname(), BgpStatus: b}
+				}
+				remotesMap[b.GetRemoteHostname()].BgpStatus = b
+			}
+		}
+	default:
+		logger.Debug("bgp status not prepared")
+		return nil
+	}
+	for _, v := range remotesMap {
+		ret = append(ret, v)
+	}
+	return ret
 }

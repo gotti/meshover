@@ -154,6 +154,10 @@ func (g *GreStatus) UpdatePeers(peersDiff []status.PeerDiffrence) {
 			}
 		case status.DiffTypeChange:
 			{
+				g.delTunnelPeer(&p)
+				if err := g.addTunnelPeer(&p); err != nil {
+					log.Println("@@@@@@@@@@@@ failed to add tunnel peer", err)
+				}
 			}
 		}
 	}

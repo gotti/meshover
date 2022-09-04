@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/docker/docker/api/types"
@@ -36,6 +37,7 @@ type FrrInstance struct {
 	configDir   string
 	containerID string
 	client      *client.Client
+	SocketDir   string
 }
 
 type frrPeerConfig struct {
@@ -58,13 +60,19 @@ func NewInstance(ctx context.Context, asn *spec.ASN, config FrrInstanceConfig) (
 		return nil, fmt.Errorf("failed to create tempdir, err=%w", err)
 	}
 
-	return &FrrInstance{ctx: ctx, asn: asn, frrConfig: config, configDir: d}, nil
+	return &FrrInstance{ctx: ctx, asn: asn, frrConfig: config, configDir: d, SocketDir: s}, nil
 }
 
 func (f *FrrInstance) Clean() error {
 	err := f.client.ContainerKill(f.ctx, f.containerID, "SIGKILL")
 	if err != nil {
 		return fmt.Errorf("failed to clean frr container, err=%w", err)
+	}
+
+	if strings.HasPrefix(f.SocketDir, "/tmp") {
+		if err := os.RemoveAll(f.SocketDir); err != nil {
+			return fmt.Errorf("failed to clean frr socketdir, err=%w", err)
+		}
 	}
 	return nil
 }
@@ -82,21 +90,27 @@ func (f *FrrInstance) newFrrPeerConfig(p []status.FrrPeerDiffrence) *frrPeerConf
 	return fc
 }
 
-func (f *FrrInstance) execCommand(ctx context.Context, command []string) error {
+func (f *FrrInstance) execCommand(ctx context.Context, command []string) ([]byte, error) {
 	res, err := f.client.ContainerExecCreate(ctx, f.containerID, types.ExecConfig{
 		AttachStdout: true,
 		AttachStderr: true,
 		Cmd:          command,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to run ContainerExecCreate, err=%w", err)
+		return nil, fmt.Errorf("failed to run ContainerExecCreate, err=%w", err)
 	}
-	respo, err := f.client.ContainerExecAttach(ctx, res.ID, types.ExecStartCheck{})
+	respo, err := f.client.ContainerExecAttach(ctx, res.ID, types.ExecStartCheck{
+		Tty:    true,
+		Detach: false})
 	if err != nil {
-		return fmt.Errorf("failed to run ContainerExecAttach, err=%w", err)
+		return nil, fmt.Errorf("failed to run ContainerExecAttach, err=%w", err)
 	}
-	respo.Close()
-	return nil
+	defer respo.Close()
+	d, err := ioutil.ReadAll(respo.Reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read all, err=%w", err)
+	}
+	return d, nil
 }
 
 func (f *FrrInstance) UpdatePeers(ctx context.Context, peer []status.FrrPeerDiffrence) error {
@@ -112,8 +126,8 @@ func (f *FrrInstance) UpdatePeers(ctx context.Context, peer []status.FrrPeerDiff
 	if err := tmpl.Execute(fb, cfg); err != nil {
 		return fmt.Errorf("failed to execute template, err=%w", err)
 	}
-	if err := f.execCommand(ctx, []string{"vtysh", "-b"}); err != nil {
-		return fmt.Errorf("failed to execute command inside the docker container, err=%w", err)
+	if d, err := f.execCommand(ctx, []string{"vtysh", "-b"}); err != nil {
+		return fmt.Errorf("failed to execute command inside the docker container, result=%s, err=%w", d, err)
 	}
 	vv, err := os.ReadFile(fb.Name())
 	if err != nil {
@@ -163,6 +177,7 @@ func (f *FrrInstance) Up(ctx context.Context) error {
 		Binds:       []string{fmt.Sprintf("%s:/etc/frr", f.configDir)},
 	}, nil, nil, "meshover0-frr")
 	if err != nil {
+		log.Println("failed to create container", err)
 		return fmt.Errorf("failed to create container, err=%w", err)
 	}
 	f.containerID = resp.ID

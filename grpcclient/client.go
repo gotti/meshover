@@ -13,7 +13,7 @@ import (
 
 type Client struct {
 	context   context.Context
-	OverlayIP net.IPNet
+	OverlayIP []*net.IPNet
 	conn      *grpc.ClientConn
 	grpcConn  spec.ControlPlaneServiceClient
 }
@@ -30,10 +30,12 @@ func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlser
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to request address assign, err=%w", err)
 	}
-	overlayIP := r.GetAddress()[0]
-	overlayIPNet := overlayIP.ToNetIPNet()
-	if overlayIPNet == nil {
+	overlayIPs := []*net.IPNet{}
+	if len(r.GetAddress()) == 0 {
 		log.Panic("failed to parse overlayIP")
+	}
+	for _, i := range r.GetAddress() {
+		overlayIPs = append(overlayIPs, i.ToNetIPNet())
 	}
 	fmt.Printf("assigned address %s\n", r.GetAddress())
 	req := new(spec.RegisterPeerRequest)
@@ -55,7 +57,7 @@ func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlser
 	if !res.Ok {
 		return nil, nil, fmt.Errorf("ok is false when registering peer")
 	}
-	return &Client{context: ctx, OverlayIP: *overlayIPNet, conn: conn, grpcConn: c}, r.GetAsnumber(), nil
+	return &Client{context: ctx, OverlayIP: overlayIPs, conn: conn, grpcConn: c}, r.GetAsnumber(), nil
 }
 
 func (c *Client) Close() error {
