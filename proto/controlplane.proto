@@ -44,10 +44,6 @@ message UnderlayLinuxKernelWireguard {
   Curve25519Key publicKey = 2 [(validate.rules).message.required = true];
 }
 
-message ASN {
-  uint32 number = 1;
-}
-
 message SourceBasedRoutingOption {
   repeated AddressCIDR sourceIPRange = 1;
 }
