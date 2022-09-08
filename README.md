@@ -17,6 +17,7 @@ IPv6を使ってWireguardでフルメッシュVPNを構成する。tailscaleやc
 - tailscaleのIPアドレスでKubernetesを動かせばいいのでは？
   - 実装してから気づいたが後述するallowed-ipsの制限のため、この構成はおそらく無理
 - BGPを喋らせればCalicoやMetalLBと接続できて完璧なのでは？
+  - CalicoとMetalLBは面倒なのでCoilとPureLBになった
 
 ## 構成の例(できたらいいな)
 
@@ -46,13 +47,13 @@ IPv6を使ってWireguardでフルメッシュVPNを構成する。tailscaleやc
   - 対外接続ノード
   - TODOで説明するアドレス収集を1.1.1.0/29で設定
   - Kubernetes Node1
-  - Calico,MetalLBと接続
+  - Pod IP広報
 - Node2 (10.128.0.2/32)
   - Kubernetes Node2
-  - Calico,MetalLBと接続
+  - Pod IP広報
 - Node3 (10.128.0.3/32)
   - Kubernetes Node3
-  - Calico,MetalLBと接続
+  - Pod IP広報
 - Node4 (10.128.0.4/32)
   - Tailscaleと接続
     - meshoverに100.64.0.0/10を広報
@@ -64,7 +65,7 @@ IPv6を使ってWireguardでフルメッシュVPNを構成する。tailscaleやc
 - [x] GREをWireguardの上に通し後述のallowed-ips制限を回避、またlink local ipv6アドレスが利用可能。
 - [x] FRRをdockerで立ち上げて自動生成したBGPの設定を投入する。
   - [x] BGP unnumberedでmeshoverの他ノードとピアリング。
-  - [x] テンプレを変更してノード特有の設定(たとえばCalicoとBGPで接続する)が可能。
+  - [x] テンプレを変更してノード特有の設定(たとえばCoilの提供するPodIPをBGPで広報する)が可能。
 - [x] Source IP based routing
   - グローバルIPにSNATされたパケットを特定ノードに転送する。
   - MetalLBでSVCとかVMにグローバルIPを割り当てた際に適切に処理できるようになる。
