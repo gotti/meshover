@@ -12,10 +12,11 @@ import (
 )
 
 type Client struct {
-	context   context.Context
-	OverlayIP []*net.IPNet
-	conn      *grpc.ClientConn
-	grpcConn  spec.ControlPlaneServiceClient
+	context       context.Context
+	OverlayIP     *net.IPNet
+	AdditionalIPs []*net.IPNet
+	conn          *grpc.ClientConn
+	grpcConn      spec.ControlPlaneServiceClient
 }
 
 func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlserver string, publickey *spec.Curve25519Key, underlayAddress *spec.AddressAndPort, routeGather []*net.IPNet) (*Client, *spec.ASN, error) {
@@ -27,19 +28,18 @@ func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlser
 	adrreq := new(spec.AddressAssignRequest)
 	adrreq.Name = hostName
 	r, err := c.AddressAssign(ctx, adrreq)
+	fmt.Printf("assigned address %s, wg address %s\n", r.GetAddress(), r.GetWireguardAddress())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to request address assign, err=%w", err)
 	}
-	overlayIPs := []*net.IPNet{}
-	if len(r.GetAddress()) == 0 {
-		log.Panic("failed to parse overlayIP")
+	overlayIP := r.GetWireguardAddress().ToNetIPNet()
+	var additionalIPs []*net.IPNet
+	for i := range r.GetAddress() {
+		additionalIPs = append(additionalIPs, r.GetAddress()[i].ToNetIPNet())
 	}
-	for _, i := range r.GetAddress() {
-		overlayIPs = append(overlayIPs, i.ToNetIPNet())
-	}
-	fmt.Printf("assigned address %s\n", r.GetAddress())
 	req := new(spec.RegisterPeerRequest)
 	req.Peer = new(spec.Peer)
+	req.Peer.WireguardAddress = r.GetWireguardAddress()
 	req.Peer.Address = r.GetAddress()
 	req.Peer.Asnumber = r.GetAsnumber()
 	req.Peer.Name = hostName
@@ -57,7 +57,7 @@ func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlser
 	if !res.Ok {
 		return nil, nil, fmt.Errorf("ok is false when registering peer")
 	}
-	return &Client{context: ctx, OverlayIP: overlayIPs, conn: conn, grpcConn: c}, r.GetAsnumber(), nil
+	return &Client{context: ctx, OverlayIP: overlayIP, AdditionalIPs: additionalIPs, conn: conn, grpcConn: c}, r.GetAsnumber(), nil
 }
 
 func (c *Client) Close() error {

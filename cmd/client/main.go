@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gotti/meshover/dummy"
 	"github.com/gotti/meshover/frr"
 	"github.com/gotti/meshover/gre"
 	"github.com/gotti/meshover/grpcclient"
@@ -154,11 +155,11 @@ func main() {
 	}
 
 	//set got meshover ip before
-	if err := tunnel.SetAddress(*client.OverlayIP[0]); err != nil {
+	if err := tunnel.SetAddress(*client.OverlayIP); err != nil {
 		panicError(logger, "failed to set address", err)
 	}
 	tunnel.SetListenPort(12912)
-	stat.IPAddr = net.IPNet{IP: client.OverlayIP[0].IP, Mask: net.IPv4Mask(255, 255, 255, 255)}
+	stat.IPAddr = *client.OverlayIP
 	stat.ASN = asn
 
 	term := make(chan os.Signal, 1)
@@ -175,7 +176,7 @@ func main() {
 	greInstance := gre.NewGreInstance(logger, stat.IPAddr.IP)
 	defer gre.Clean()
 
-	conf := frr.NewFrrConfig(*hostName, client.OverlayIP[0].IP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
+	conf := frr.NewFrrConfig(*hostName, client.AdditionalIPs[0].IP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
 
 	var f frr.Backend
 
@@ -212,6 +213,20 @@ func main() {
 		}
 	}()
 
+	loopbackInterface, err := dummy.NewDevice("dummy-meshover0")
+	if err != nil {
+		panicError(logger, "failed to create new dummy interface", err)
+	}
+	for i := range client.AdditionalIPs {
+		loopbackInterface.AddAddress(client.AdditionalIPs[i])
+	}
+	defer func() {
+		err := loopbackInterface.Clean()
+		if err != nil {
+			panicError(logger, "failed to clean loopbackInterface", err)
+		}
+	}()
+
 	statusBGP := make(chan []*spec.PeerBGPStatus, 1)
 
 	go func() {
@@ -232,19 +247,19 @@ func main() {
 					frrdiff := []status.FrrPeerDiffrence{}
 					greInstance.UpdatePeers(diff)
 					for i, d := range diff {
-						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetAddress()[0].ToNetIPNet().IP)
+						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetWireguardAddress().ToNetIPNet().IP)
 						fmt.Println("opossite", oppsite)
 						if err != nil {
-							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetAddress()[0].ToNetIPNet(), err)
+							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetWireguardAddress().ToNetIPNet().IP, err)
 						}
 						fmt.Println("opposite", oppsite)
 						frrdiff = append(frrdiff, status.FrrPeerDiffrence{PeerDiffrence: diff[i], TunName: oppsite})
 					}
 					sbrdiffs := []iproute.SBRDiff{}
 					for _, d := range diff {
-						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetAddress()[0].ToNetIPNet().IP)
+						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetWireguardAddress().ToNetIPNet().IP)
 						if err != nil {
-							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetAddress()[0].ToNetIPNet(), err)
+							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetWireguardAddress(), err)
 						}
 						sbr := d.NewPeer.GetSbrOption()
 						if sbr == nil {
@@ -287,7 +302,7 @@ func main() {
 						NodeStatus: &spec.MinimumNodeStatus{
 							LocalAS: asn,
 							Addresses: []*spec.AddressCIDR{
-								spec.NewAddressCIDR(*client.OverlayIP[0]),
+								spec.NewAddressCIDR(*client.AdditionalIPs[0]),
 							},
 							Endpoint: spec.NewAddress(addrs[0].IP),
 						},
