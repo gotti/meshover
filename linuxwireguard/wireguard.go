@@ -86,7 +86,7 @@ func (t *WireguardTunnel) Close() error {
 
 func (t *WireguardTunnel) setPeer(p *spec.Peer) error {
 	u := p.GetUnderlayLinuxKernelWireguard()
-	o, err := exec.Command("wg", "set", t.link.Attrs().Name, "peer", u.GetPublicKey().EncodeBase64(), "allowed-ips", p.GetAddress()[0].Format(), "endpoint", u.GetEndpoint().Format(), "persistent-keepalive", "10").CombinedOutput()
+	o, err := exec.Command("wg", "set", t.link.Attrs().Name, "peer", u.GetPublicKey().EncodeBase64(), "allowed-ips", p.GetWireguardAddress().Format(), "endpoint", u.GetEndpoint().Format(), "persistent-keepalive", "10").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to set peer, out=%s, err=%w", string(o), err)
 	}
@@ -103,7 +103,7 @@ func (t *WireguardTunnel) delPeer(p *spec.Peer) error {
 }
 
 func (t *WireguardTunnel) addRoute(p *spec.Peer) error {
-	_, n, err := net.ParseCIDR(p.GetAddress()[0].ToNetIPNet().String())
+	_, n, err := net.ParseCIDR(p.GetWireguardAddress().ToNetIPNet().String())
 	if err != nil {
 		log.Printf("failed to parse cidr, err=%s\n", err)
 	}
@@ -120,7 +120,7 @@ func (t *WireguardTunnel) addRoute(p *spec.Peer) error {
 }
 
 func (t *WireguardTunnel) delRoute(p *spec.Peer) error {
-	_, n, err := net.ParseCIDR(p.GetAddress()[0].ToNetIPNet().String())
+	_, n, err := net.ParseCIDR(p.GetWireguardAddress().ToNetIPNet().String())
 	if err != nil {
 		log.Printf("failed to parse cidr, err=%s\n", err)
 	}
@@ -199,8 +199,6 @@ func generateLinkLocalV6(address net.IP) net.IP {
 */
 
 func (t *WireguardTunnel) SetAddress(address net.IPNet) error {
-	_, m := address.Mask.Size()
-	address.Mask = net.CIDRMask(m, m)
 	addr, err := netlink.ParseAddr(address.String())
 	if err != nil {
 		return fmt.Errorf("parseaddr, err=%w", err)

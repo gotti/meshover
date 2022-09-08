@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gotti/meshover/dummy"
 	"github.com/gotti/meshover/frr"
 	"github.com/gotti/meshover/gre"
 	"github.com/gotti/meshover/grpcclient"
@@ -34,14 +35,21 @@ var frrVtyshConfig string
 var (
 	controlserver     = flag.String("controlserver", "", "localhost:8080")
 	statusserver      = flag.String("statusserver", "", "localhost:8080")
+	rawfrrBackend     = flag.String("frr", "", "select one of following: none, dockersdk, nerdctl")
 	hostName          = flag.String("hostname", "", "hostname")
 	capabl            = flag.String("cap", "", "wireguard,linuxkernelwireguard")
 	staticRoutes      = flag.String("static", "", "192.168.0.0/16")
 	rawRouteGathering = flag.String("gathering", "", "1.1.1.0/27,1.1.2.0/29")
 )
 
+type frrBackendType string
+
 var (
-	routeGathering []*net.IPNet = nil
+	routeGathering      []*net.IPNet = nil
+	frrBackendNone                   = frrBackendType("none")
+	frrBackendDockerSDK              = frrBackendType("dockersdk")
+	frrBackendNerdCtl                = frrBackendType("nerdctl")
+	frrBackend                       = frrBackendNone
 )
 
 func getMachineAddresses() (ret []*net.IPNet, err error) {
@@ -85,6 +93,16 @@ func parseArgs() error {
 	}
 	if *controlserver == "" {
 		return fmt.Errorf("controlserver is not specified")
+	}
+	switch *rawfrrBackend {
+	case "none":
+		frrBackend = frrBackendNone
+	case "dockersdk":
+		frrBackend = frrBackendDockerSDK
+	case "nerdctl":
+		frrBackend = frrBackendNerdCtl
+	default:
+		return fmt.Errorf("please select valid frr backend with -frr")
 	}
 	return nil
 }
@@ -137,11 +155,11 @@ func main() {
 	}
 
 	//set got meshover ip before
-	if err := tunnel.SetAddress(*client.OverlayIP[0]); err != nil {
+	if err := tunnel.SetAddress(*client.OverlayIP); err != nil {
 		panicError(logger, "failed to set address", err)
 	}
 	tunnel.SetListenPort(12912)
-	stat.IPAddr = net.IPNet{IP: client.OverlayIP[0].IP, Mask: net.IPv4Mask(255, 255, 255, 255)}
+	stat.IPAddr = *client.OverlayIP
 	stat.ASN = asn
 
 	term := make(chan os.Signal, 1)
@@ -158,19 +176,32 @@ func main() {
 	greInstance := gre.NewGreInstance(logger, stat.IPAddr.IP)
 	defer gre.Clean()
 
-	conf := frr.NewFrrConfig(*hostName, client.OverlayIP[0].IP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
-	f, err := frr.NewInstance(ctx, asn, conf)
-	if err != nil {
-		panicError(logger, "failed to create frr instance", err)
+	conf := frr.NewFrrConfig(*hostName, client.AdditionalIPs[0].IP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
+
+	var f frr.Backend
+
+	switch frrBackend {
+	case frrBackendNone:
+		f = frr.NewDummyInstance()
+	case frrBackendDockerSDK:
+		f, err = frr.NewDockerInstance(ctx, asn, conf)
+		if err != nil {
+			panicError(logger, "failed to create frr instance", err)
+		}
+	case frrBackendNerdCtl:
+		f, err = frr.NewNerdCtlInstance(ctx, asn, conf)
+		if err != nil {
+			panicError(logger, "failed to create frr instance", err)
+		}
 	}
 	defer func() {
-		err := f.Clean()
+		err := f.Kill()
 		if err != nil {
 			panicError(logger, "failed to cleanup frr container", err)
 		}
 	}()
 	go func() {
-		if err := f.Up(ctx); err != nil {
+		if err := f.Run(ctx); err != nil {
 			panicError(logger, "failed to up frr instance", err)
 		}
 	}()
@@ -179,6 +210,20 @@ func main() {
 	defer func() {
 		if err := iprouteInstance.Clean(); err != nil {
 			panicError(logger, "failed to clean iproute instance", err)
+		}
+	}()
+
+	loopbackInterface, err := dummy.NewDevice("dummy-meshover0")
+	if err != nil {
+		panicError(logger, "failed to create new dummy interface", err)
+	}
+	for i := range client.AdditionalIPs {
+		loopbackInterface.AddAddress(client.AdditionalIPs[i])
+	}
+	defer func() {
+		err := loopbackInterface.Clean()
+		if err != nil {
+			panicError(logger, "failed to clean loopbackInterface", err)
 		}
 	}()
 
@@ -202,19 +247,19 @@ func main() {
 					frrdiff := []status.FrrPeerDiffrence{}
 					greInstance.UpdatePeers(diff)
 					for i, d := range diff {
-						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetAddress()[0].ToNetIPNet().IP)
+						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetWireguardAddress().ToNetIPNet().IP)
 						fmt.Println("opossite", oppsite)
 						if err != nil {
-							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetAddress()[0].ToNetIPNet(), err)
+							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetWireguardAddress().ToNetIPNet().IP, err)
 						}
 						fmt.Println("opposite", oppsite)
 						frrdiff = append(frrdiff, status.FrrPeerDiffrence{PeerDiffrence: diff[i], TunName: oppsite})
 					}
 					sbrdiffs := []iproute.SBRDiff{}
 					for _, d := range diff {
-						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetAddress()[0].ToNetIPNet().IP)
+						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetWireguardAddress().ToNetIPNet().IP)
 						if err != nil {
-							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetAddress()[0].ToNetIPNet(), err)
+							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetWireguardAddress(), err)
 						}
 						sbr := d.NewPeer.GetSbrOption()
 						if sbr == nil {
@@ -257,7 +302,7 @@ func main() {
 						NodeStatus: &spec.MinimumNodeStatus{
 							LocalAS: asn,
 							Addresses: []*spec.AddressCIDR{
-								spec.NewAddressCIDR(*client.OverlayIP[0]),
+								spec.NewAddressCIDR(*client.AdditionalIPs[0]),
 							},
 							Endpoint: spec.NewAddress(addrs[0].IP),
 						},
@@ -286,7 +331,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				stat, err := f.GetBGPStatus(ctx)
+				stat, err := frr.GetBGPStatus(ctx, f)
 				if err != nil {
 					logger.Error("failed to get bgp status", zap.Error(err))
 				}

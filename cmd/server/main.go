@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"flag"
 	"fmt"
@@ -12,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gotti/meshover/spec"
 	"github.com/gotti/meshover/pkg/ip"
+	"github.com/gotti/meshover/spec"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -22,9 +21,10 @@ import (
 )
 
 var (
-	listenAddress      = flag.String("listen", "", "example: 0.0.0.0:8080")
-	stateFilePath      = flag.String("statefile", "state", "filename")
-	assignAddressRange = flag.String("assignaddress", "10.128.0.0/12,fd00:beef:beef::/48", "list of cidr ipaddress")
+	listenAddress         = flag.String("listen", "", "example: 0.0.0.0:8080")
+	stateFilePath         = flag.String("statefile", "state", "filename")
+	wireguardAddressRange = flag.String("wgaddress", "10.192.0.0/12", "wireguard peer address")
+	assignAddressRange    = flag.String("assignaddress", "10.128.0.0/12,fd00:beef:beef::/48", "list of cidr ipaddress")
 )
 
 type controlServer struct {
@@ -88,17 +88,6 @@ func (c *controlServer) FindPeer(name string) *spec.Peer {
 	return nil
 }
 
-func (c *controlServer) FindByIPNet(n net.IPNet) *spec.Peer {
-	for _, p := range c.peers.Peers {
-		for _, a := range p.GetAddress() {
-			if a.ToNetIPNet().IP.Equal(n.IP) && bytes.Compare(a.ToNetIPNet().Mask, n.Mask) == 0 {
-				return p
-			}
-		}
-	}
-	return nil
-}
-
 func (c *controlServer) ListPeers(ctx context.Context, in *spec.ListPeersRequest) (*spec.ListPeersResponse, error) {
 	ret := new(spec.ListPeersResponse)
 	ret.Peers = c.peers
@@ -110,8 +99,12 @@ func (c *controlServer) AddressAssign(ctx context.Context, in *spec.AddressAssig
 	p := c.FindPeer(in.GetName())
 	if p != nil {
 		fmt.Println("found ")
-		ret := &spec.AddressAssignResponse{Address: p.GetAddress(), Asnumber: p.Asnumber}
+		ret := &spec.AddressAssignResponse{WireguardAddress: p.WireguardAddress, Address: p.GetAddress(), Asnumber: p.Asnumber}
 		return ret, nil
+	}
+	wgAddress, err := ip.GenerateRandomIP(*wireguardAddressRange)
+	if err != nil {
+		log.Fatalf("%s\n", err)
 	}
 	addresses := []*spec.AddressCIDR{}
 	for _, a := range strings.Split(*assignAddressRange, ",") {
@@ -122,7 +115,9 @@ func (c *controlServer) AddressAssign(ctx context.Context, in *spec.AddressAssig
 		}
 		addresses = append(addresses, spec.NewAddressCIDR(*i))
 	}
-	ret := spec.AddressAssignResponse{Address: addresses, Asnumber: &spec.ASN{Number: ip.GenerateRandomASN()}}
+	fmt.Println("@@@@wireguard@@@@")
+	fmt.Println(wgAddress)
+	ret := spec.AddressAssignResponse{WireguardAddress: spec.NewAddressCIDR(*wgAddress), Address: addresses, Asnumber: &spec.ASN{Number: ip.GenerateRandomASN()}}
 	return &ret, nil
 }
 
@@ -140,6 +135,9 @@ func (c *controlServer) RegisterPeer(ctx context.Context, in *spec.RegisterPeerR
 
 func loadAndSanitizeArgs() {
 	flag.Parse()
+	if _, _, err := net.ParseCIDR(*wireguardAddressRange); err != nil {
+		log.Fatalf("unrecognized wireguardAddressRange, err=%s", err)
+	}
 	for _, s := range strings.Split(*assignAddressRange, ",") {
 		if _, _, err := net.ParseCIDR(s); err != nil {
 			log.Fatalf("unrecognized assignAddressRange, err=%s", err)

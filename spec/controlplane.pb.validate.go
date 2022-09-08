@@ -1314,6 +1314,35 @@ func (m *Peer) validate(all bool) error {
 		}
 	}
 
+	if all {
+		switch v := interface{}(m.GetWireguardAddress()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PeerValidationError{
+					field:  "WireguardAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PeerValidationError{
+					field:  "WireguardAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWireguardAddress()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PeerValidationError{
+				field:  "WireguardAddress",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	for idx, item := range m.GetAddress() {
 		_, _ = idx, item
 
@@ -1404,37 +1433,6 @@ func (m *Peer) validate(all bool) error {
 			if err := v.Validate(); err != nil {
 				return PeerValidationError{
 					field:  "UnderlayUnknown",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	case *Peer_UnderlayTailscale:
-
-		if all {
-			switch v := interface{}(m.GetUnderlayTailscale()).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, PeerValidationError{
-						field:  "UnderlayTailscale",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, PeerValidationError{
-						field:  "UnderlayTailscale",
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(m.GetUnderlayTailscale()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return PeerValidationError{
-					field:  "UnderlayTailscale",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -2080,6 +2078,46 @@ func (m *AddressAssignResponse) validate(all bool) error {
 	}
 
 	var errors []error
+
+	if m.GetWireguardAddress() == nil {
+		err := AddressAssignResponseValidationError{
+			field:  "WireguardAddress",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetWireguardAddress()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AddressAssignResponseValidationError{
+					field:  "WireguardAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AddressAssignResponseValidationError{
+					field:  "WireguardAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWireguardAddress()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AddressAssignResponseValidationError{
+				field:  "WireguardAddress",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(m.GetAddress()) < 1 {
 		err := AddressAssignResponseValidationError{

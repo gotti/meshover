@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestListQueue(t *testing.T){
+func TestListQueue(t *testing.T) {
 	ctx := context.Background()
 	queue := NewQueue(ctx, 100*time.Millisecond)
 	d := &spec.StatusManagerPeerStatus{
@@ -20,46 +20,46 @@ func TestListQueue(t *testing.T){
 	}
 	queue.Add(d)
 	l1 := queue.List()
-	if !proto.Equal(d,l1[0]){
+	if !proto.Equal(d, l1[0]) {
 		t.Errorf("queue data not match expected %+v, got %+v", d, l1[0])
 	}
-	time.Sleep(150*time.Millisecond)
+	time.Sleep(150 * time.Millisecond)
 	l2 := queue.List()
-	if len(l2) != 0{
+	if len(l2) != 0 {
 		t.Errorf("queue data not match expected cleaned, got %+v", l2[0])
 	}
 }
 
-func equalNodeArray(a, b []*Node) error{
-	if len(a) != len(b){
+func equalNodeArray(a, b []*Node) error {
+	if len(a) != len(b) {
 		return fmt.Errorf("length not match, left=%d, right=%d", len(a), len(b))
 	}
-	for i := range a{
-		if !reflect.DeepEqual(a[i], b[i]){
+	for i := range a {
+		if !reflect.DeepEqual(a[i], b[i]) {
 			return fmt.Errorf("element not match, index=%d left=%+v, right=%+v", i, a[i], b[i])
 		}
 	}
 	return nil
 }
 
-func equalEdgeArray(a, b []*Edge) error{
-	if len(a) != len(b){
+func equalEdgeArray(a, b []*Edge) error {
+	if len(a) != len(b) {
 		return fmt.Errorf("length not match, left=%d, right=%d", len(a), len(b))
 	}
-	for i := range a{
-		if !reflect.DeepEqual(a[i], b[i]){
+	for i := range a {
+		if !reflect.DeepEqual(a[i], b[i]) {
 			return fmt.Errorf("element not match, index=%d left=%+v, right=%+v", i, a[i], b[i])
 		}
 	}
 	return nil
 }
 
-func TestNodeList(t *testing.T){
-	_, n1, _ := net.ParseCIDR("10.34.81.156/32") 
-	data := []struct{
+func TestNodeList(t *testing.T) {
+	_, n1, _ := net.ParseCIDR("10.34.81.156/32")
+	data := []struct {
 		testName string
-		in []*spec.StatusManagerPeerStatus
-		out []*Node
+		in       []*spec.StatusManagerPeerStatus
+		out      []*Node
 	}{
 		{
 			testName: "1",
@@ -76,101 +76,103 @@ func TestNodeList(t *testing.T){
 			},
 			out: []*Node{
 				{
-					ID: "1",
+					ID:       1,
 					Hostname: "hoge1",
-					IP: "10.34.81.156/32",
+					IP:       "10.34.81.156/32",
 				},
 			},
 		},
 	}
 	ctx := context.Background()
-	for _, d := range data{
+	for _, d := range data {
 		queue := NewQueue(ctx, 999*time.Second)
-		for _, n := range d.in{
+		for _, n := range d.in {
 			queue.Add(n)
 		}
-		if err := equalNodeArray(d.out, queue.nodes()); err != nil{
+		if err := equalNodeArray(d.out, queue.nodes()); err != nil {
 			t.Errorf("%s: err=%s", d.testName, err)
 		}
 	}
 }
 
 var (
-	rawnet1 = "10.34.81.156/32"
+	rawnet1    = "10.34.81.156/32"
 	_, net1, _ = net.ParseCIDR(rawnet1)
-	rawnet2 = "10.34.81.157/32"
+	rawnet2    = "10.34.81.157/32"
 	_, net2, _ = net.ParseCIDR(rawnet2)
-	rawnet3 = "10.34.81.157/32"
+	rawnet3    = "10.34.81.157/32"
 	_, net3, _ = net.ParseCIDR(rawnet3)
-	hosthoge1 = &spec.StatusManagerPeerStatus{
-					Hostname: "hoge1",
-					NodeStatus: &spec.MinimumNodeStatus{
-						LocalAS: &spec.ASN{Number: 1},
-						Addresses: []*spec.AddressCIDR{
-							spec.NewAddressCIDR(*net1),
-						},
-					},
-					PeerStatus: []*spec.NodePeersStatus{
-						{
-							RemoteHostname: "hoge2",
-							BgpStatus: &spec.PeerBGPStatus{
-								BGPState: spec.BGPStates_BGPStateEstablished,
-							},
-						},
-					},
-				}
+	hosthoge1  = &spec.StatusManagerPeerStatus{
+		Hostname: "hoge1",
+		NodeStatus: &spec.MinimumNodeStatus{
+			LocalAS: &spec.ASN{Number: 1},
+			Addresses: []*spec.AddressCIDR{
+				spec.NewAddressCIDR(*net1),
+			},
+		},
+		PeerStatus: []*spec.NodePeersStatus{
+			{
+				RemoteHostname: "hoge2",
+				BgpStatus: &spec.PeerBGPStatus{
+					RemoteAS: &spec.ASN{Number: 2},
+					BGPState: spec.BGPStates_BGPStateEstablished,
+				},
+			},
+		},
+	}
 	hosthoge2 = &spec.StatusManagerPeerStatus{
-					Hostname: "hoge2",
-					NodeStatus: &spec.MinimumNodeStatus{
-						LocalAS: &spec.ASN{Number: 2},
-						Addresses: []*spec.AddressCIDR{
-							spec.NewAddressCIDR(*net2),
-						},
-					},
-					PeerStatus: []*spec.NodePeersStatus{
-						{
-							RemoteHostname: "hoge1",
-							BgpStatus: &spec.PeerBGPStatus{
-								BGPState: spec.BGPStates_BGPStateEstablished,
-							},
-						},
-					},
-				}
+		Hostname: "hoge2",
+		NodeStatus: &spec.MinimumNodeStatus{
+			LocalAS: &spec.ASN{Number: 2},
+			Addresses: []*spec.AddressCIDR{
+				spec.NewAddressCIDR(*net2),
+			},
+		},
+		PeerStatus: []*spec.NodePeersStatus{
+			{
+				RemoteHostname: "hoge1",
+				BgpStatus: &spec.PeerBGPStatus{
+					RemoteAS: &spec.ASN{Number: 1},
+					BGPState: spec.BGPStates_BGPStateEstablished,
+				},
+			},
+		},
+	}
 )
 
-func TestEdgesOnOneNode(t *testing.T){
-	data := []struct{
+func TestEdgesOnOneNode(t *testing.T) {
+	data := []struct {
 		testName string
-		in *spec.StatusManagerPeerStatus
-		out []*Edge
+		in       *spec.StatusManagerPeerStatus
+		out      []*Edge
 	}{
 		{
 			testName: "1",
-			in: hosthoge1,
+			in:       hosthoge1,
 			out: []*Edge{
 				{
-					ID: "1",
-					SourceID: "2",
-					TargetID: "3",
+					ID:       "1",
+					SourceID: 1,
+					TargetID: 2,
 				},
 			},
 		},
 	}
 	ctx := context.Background()
-	for _, d := range data{
+	for _, d := range data {
 		queue := NewQueue(ctx, 999*time.Second)
 		e := queue.edgesOnOneNode(d.in)
-		if err := equalEdgeArray(e, d.out); err != nil{
+		if err := equalEdgeArray(e, d.out); err != nil {
 			t.Errorf("%s: err=%s", d.testName, err)
 		}
 	}
 
 }
 
-func TestNodeAndEdgeList(t *testing.T){
-	data := []struct{
+func TestNodeAndEdgeList(t *testing.T) {
+	data := []struct {
 		testName string
-		in []*spec.StatusManagerPeerStatus
+		in       []*spec.StatusManagerPeerStatus
 		outNodes []*Node
 		outEdges []*Edge
 	}{
@@ -191,39 +193,39 @@ func TestNodeAndEdgeList(t *testing.T){
 			},
 			outNodes: []*Node{
 				{
-					ID: "1",
+					ID:       1,
 					Hostname: "hoge1",
-					IP: rawnet1,
+					IP:       rawnet1,
 				},
 				{
-					ID: "2",
+					ID:       2,
 					Hostname: "hoge2",
-					IP: rawnet2,
+					IP:       rawnet2,
 				},
 				{
-					ID: "3",
+					ID:       3,
 					Hostname: "hoge3",
-					IP: rawnet3,
+					IP:       rawnet3,
 				},
 			},
 			outEdges: []*Edge{
 				{
-					ID: "4",
-					SourceID: "1",
-					TargetID: "2",
+					ID:       "1",
+					SourceID: 1,
+					TargetID: 2,
 				},
 				{
-					ID: "5",
-					SourceID: "2",
-					TargetID: "1",
+					ID:       "2",
+					SourceID: 2,
+					TargetID: 1,
 				},
 			},
 		},
 	}
 	ctx := context.Background()
-	for _, d := range data{
+	for _, d := range data {
 		queue := NewQueue(ctx, 999*time.Second)
-		for _, n := range d.in{
+		for _, n := range d.in {
 			queue.Add(n)
 		}
 		nodes, edges := queue.NodesAndEdges()

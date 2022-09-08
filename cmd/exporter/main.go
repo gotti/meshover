@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gotti/meshover/internal/statusqueue"
@@ -54,12 +55,12 @@ func (s *server) set() {
 		fmt.Println("@@@@@@@@@@@@@@@@\nnodes")
 		for _, n := range nodes {
 			fmt.Println(n.Hostname)
-			graphNodeConnNode.With(prometheus.Labels{"id": n.ID, "title": n.Hostname, "mainstat": n.IP}).Set(0)
+			graphNodeConnNode.With(prometheus.Labels{"id": strconv.FormatUint(uint64(n.ID), 10), "title": n.Hostname, "mainstat": n.IP}).Set(0)
 		}
 		fmt.Println("edges")
 		for _, e := range edges {
 			fmt.Println(e.SourceID, e.TargetID)
-			graphNodeConnEdge.With(prometheus.Labels{"id": e.ID, "source": e.SourceID, "target": e.TargetID}).Set(0)
+			graphNodeConnEdge.With(prometheus.Labels{"id": e.ID, "source": strconv.FormatUint(uint64(e.SourceID), 10), "target": strconv.FormatUint(uint64(e.TargetID), 10)}).Set(0)
 		}
 		time.Sleep(15 * time.Second)
 	}
