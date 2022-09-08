@@ -16,5 +16,9 @@ deploy: build
 	ssh meshover3 "sudo pkill client" || echo "$?"
 	scp ./client meshover2:~/
 	scp ./client meshover3:~/
-	ssh meshover2 "nohup sudo ./client -controlserver 192.168.129.66:12384 -statusserver 192.168.129.66:12385 &" &
-	ssh meshover3 "nohup sudo ./client -controlserver 192.168.129.66:12384 -statusserver 192.168.129.66:12385 &" &
+	ssh meshover2 "nohup sudo ./client -controlserver 192.168.129.66:12384 -statusserver 192.168.129.66:12385 -frr nerdctl &" &
+	ssh meshover3 "nohup sudo ./client -controlserver 192.168.129.66:12384 -statusserver 192.168.129.66:12385 -frr nerdctl &" &
+
+test:
+	go mod tidy
+	go test ./...

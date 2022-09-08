@@ -48,7 +48,7 @@ func deleteInvalid(original []byte, invalidCodes []byte) []byte {
 }
 
 // GetBGPStatus executes bgp neighbor command inside frr container and returns []*spec.PeerBGPStatus
-func (f *FrrInstance) GetBGPStatus(ctx context.Context) ([]*spec.PeerBGPStatus, error) {
+func GetBGPStatus(ctx context.Context, f Backend) ([]*spec.PeerBGPStatus, error) {
 	j, err := f.execCommand(ctx, []string{"vtysh", "-c", "show bgp neighbor json"})
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch bgp neighbor json on frr, err=%w", err)

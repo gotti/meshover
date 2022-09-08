@@ -34,14 +34,21 @@ var frrVtyshConfig string
 var (
 	controlserver     = flag.String("controlserver", "", "localhost:8080")
 	statusserver      = flag.String("statusserver", "", "localhost:8080")
+	rawfrrBackend     = flag.String("frr", "", "select one of following: none, dockersdk, nerdctl")
 	hostName          = flag.String("hostname", "", "hostname")
 	capabl            = flag.String("cap", "", "wireguard,linuxkernelwireguard")
 	staticRoutes      = flag.String("static", "", "192.168.0.0/16")
 	rawRouteGathering = flag.String("gathering", "", "1.1.1.0/27,1.1.2.0/29")
 )
 
+type frrBackendType string
+
 var (
-	routeGathering []*net.IPNet = nil
+	routeGathering      []*net.IPNet = nil
+	frrBackendNone                   = frrBackendType("none")
+	frrBackendDockerSDK              = frrBackendType("dockersdk")
+	frrBackendNerdCtl                = frrBackendType("nerdctl")
+	frrBackend                       = frrBackendNone
 )
 
 func getMachineAddresses() (ret []*net.IPNet, err error) {
@@ -85,6 +92,16 @@ func parseArgs() error {
 	}
 	if *controlserver == "" {
 		return fmt.Errorf("controlserver is not specified")
+	}
+	switch *rawfrrBackend {
+	case "none":
+		frrBackend = frrBackendNone
+	case "dockersdk":
+		frrBackend = frrBackendDockerSDK
+	case "nerdctl":
+		frrBackend = frrBackendNerdCtl
+	default:
+		return fmt.Errorf("please select valid frr backend with -frr")
 	}
 	return nil
 }
@@ -159,18 +176,31 @@ func main() {
 	defer gre.Clean()
 
 	conf := frr.NewFrrConfig(*hostName, client.OverlayIP[0].IP.String(), readConfig("./conf/frr.conf"), frrDaemonsConfig, frrVtyshConfig)
-	f, err := frr.NewInstance(ctx, asn, conf)
-	if err != nil {
-		panicError(logger, "failed to create frr instance", err)
+
+	var f frr.Backend
+
+	switch frrBackend {
+	case frrBackendNone:
+		f = frr.NewDummyInstance()
+	case frrBackendDockerSDK:
+		f, err = frr.NewDockerInstance(ctx, asn, conf)
+		if err != nil {
+			panicError(logger, "failed to create frr instance", err)
+		}
+	case frrBackendNerdCtl:
+		f, err = frr.NewNerdCtlInstance(ctx, asn, conf)
+		if err != nil {
+			panicError(logger, "failed to create frr instance", err)
+		}
 	}
 	defer func() {
-		err := f.Clean()
+		err := f.Kill()
 		if err != nil {
 			panicError(logger, "failed to cleanup frr container", err)
 		}
 	}()
 	go func() {
-		if err := f.Up(ctx); err != nil {
+		if err := f.Run(ctx); err != nil {
 			panicError(logger, "failed to up frr instance", err)
 		}
 	}()
@@ -286,7 +316,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				stat, err := f.GetBGPStatus(ctx)
+				stat, err := frr.GetBGPStatus(ctx, f)
 				if err != nil {
 					logger.Error("failed to get bgp status", zap.Error(err))
 				}
