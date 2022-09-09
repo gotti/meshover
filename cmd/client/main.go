@@ -18,6 +18,7 @@ import (
 	"github.com/gotti/meshover/gre"
 	"github.com/gotti/meshover/grpcclient"
 	"github.com/gotti/meshover/iproute"
+	"github.com/gotti/meshover/kernel"
 	"github.com/gotti/meshover/linuxwireguard"
 	"github.com/gotti/meshover/pkg/statuspusher"
 	"github.com/gotti/meshover/spec"
@@ -35,6 +36,8 @@ var frrVtyshConfig string
 var (
 	controlserver     = flag.String("controlserver", "", "localhost:8080")
 	statusserver      = flag.String("statusserver", "", "localhost:8080")
+	coilSupport       = flag.Bool("coiladvertise", false, "if set, meshover advertise routes added by coil")
+	coilNatEnabled    = flag.Bool("coilnat", false, "if set, meshover apply iptables nat settings for default route")
 	rawfrrBackend     = flag.String("frr", "", "select one of following: none, dockersdk, nerdctl")
 	hostName          = flag.String("hostname", "", "hostname")
 	capabl            = flag.String("cap", "", "wireguard,linuxkernelwireguard")
@@ -52,7 +55,7 @@ var (
 	frrBackend                       = frrBackendNone
 )
 
-func getMachineAddresses() (ret []*net.IPNet, err error) {
+func getMachineAddresses(isIpv6 bool) (ret []*net.IPNet, err error) {
 	links, err := netlink.LinkList()
 	if err != nil {
 		log.Fatalf("%s\n", err)
@@ -61,7 +64,13 @@ func getMachineAddresses() (ret []*net.IPNet, err error) {
 		if l.Type() != "device" && l.Type() != "vlan" {
 			continue
 		}
-		addr, err := netlink.AddrList(l, syscall.AF_INET6)
+		var t int
+		if isIpv6 {
+			t = syscall.AF_INET6
+		} else {
+			t = syscall.AF_INET
+		}
+		addr, err := netlink.AddrList(l, t)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch ip address, err=%w", err)
 		}
@@ -72,6 +81,28 @@ func getMachineAddresses() (ret []*net.IPNet, err error) {
 		}
 	}
 	return ret, nil
+}
+
+func getDefaultRouteIF() (ifname *string, err error) {
+	links, err := netlink.LinkList()
+	if err != nil {
+		log.Fatalf("%s\n", err)
+	}
+	for _, l := range links {
+		if l.Type() != "device" && l.Type() != "vlan" {
+			continue
+		}
+		addr, err := netlink.AddrList(l, syscall.AF_INET)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch ip address, err=%w", err)
+		}
+		for _, a := range addr {
+			if a.IP.IsGlobalUnicast() {
+				return &l.Attrs().Name, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("not found")
 }
 
 func parseArgs() error {
@@ -131,7 +162,7 @@ func main() {
 	stat := status.NewClient(*hostName, "meshover0", &spec.Peers{})
 
 	//get ipv6 unicast address from device or vlan
-	addrs, err := getMachineAddresses()
+	addrs, err := getMachineAddresses(true)
 	if err != nil {
 		panicError(logger, "failed to get ipv6 unicast address", err)
 	}
@@ -152,6 +183,26 @@ func main() {
 	defer client.Close()
 	if err != nil {
 		panicError(logger, "failed to create new grpc connection", err)
+	}
+
+	_, net10, err := net.ParseCIDR("10.0.0.0/8")
+	if err != nil {
+		panicError(logger, "failed to parse 10.0.0.0/8", err)
+	}
+
+	destif, err := getDefaultRouteIF()
+	if err != nil {
+		panicError(logger, "failed to get default route if", err)
+	}
+
+	if _, err := kernel.NewInstance(kernel.Settings{
+		CoilSupport: true,
+		Nat: &kernel.NatSetting{
+			SourceIPsForNat:   net10,
+			DestinationDevice: *destif,
+		},
+	}); err != nil {
+		panicError(logger, "failed to create new kernel instance", err)
 	}
 
 	//set got meshover ip before

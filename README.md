@@ -72,7 +72,7 @@ IPv6を使ってWireguardでフルメッシュVPNを構成する。tailscaleやc
   - オプション`-gathering <CIDR range>`を指定したノードにその範囲のIPアドレスが集約される。
 - [x] Prometheus Exporter
   - Grafana Node Graphを使えばノードと接続状況を見れる
-  - [](./docs/statusmanager.md)
+  - [status manager docs](./docs/statusmanager.md)
 
 ## 技術
 
