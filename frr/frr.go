@@ -32,6 +32,18 @@ type Backend interface {
 	UpdatePeers(ctx context.Context, peer []status.FrrPeerDiffrence) error
 }
 
+// BackendType defines type of backend, such as docker, containerd
+type BackendType string
+
+var (
+	//BackendNone do nothing
+	BackendNone = BackendType("none")
+	//BackendDockerSDK run frr container with docker sdk
+	BackendDockerSDK = BackendType("dockersdk")
+	//BackendNerdCtl run frr container with containerd(nerdctl)
+	BackendNerdCtl = BackendType("nerdctl")
+)
+
 // InstanceConfig is frr instance configuration
 type InstanceConfig struct {
 	hostname     string
