@@ -48,14 +48,8 @@ func updatePeers(logger *zap.Logger, t Tunnel, peersDiff []status.PeerDiffrence)
 				if err := t.delPeer(p.OldPeer); err != nil {
 					return fmt.Errorf("CHG: failed to add peer, err=%s", err)
 				}
-				if err := t.delRoute(p.OldPeer); err != nil {
-					return fmt.Errorf("CHG: failed to add route, err=%s", err)
-				}
 				if err := t.addPeer(p.NewPeer); err != nil {
 					return fmt.Errorf("CHG: failed to add peer, err=%s", err)
-				}
-				if err := t.addRoute(p.NewPeer); err != nil {
-					return fmt.Errorf("CHG: failed to add route, err=%s", err)
 				}
 			}
 		}

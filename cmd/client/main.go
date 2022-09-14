@@ -172,11 +172,17 @@ func main() {
 		panicError(logger, "failed to get ipv6 unicast address", err)
 	}
 	settings := meshover.Settings{
-		HostName:      *hostName,
-		ControlServer: *controlserver,
-		StatusServer:  *statusserver,
-		UnderlayIP:    addrs[0],
-		FrrBGPConfig:  readConfig("./conf/frr.conf"),
+		HostName:        *hostName,
+		ControlServer:   *controlserver,
+		StatusServer:    *statusserver,
+		UnderlayIP:      addrs[0],
+		RouteGathering:  routeGathering,
+		FrrVtyshConfig:  frrVtyshConfig,
+		FrrDaemonConfig: frrDaemonsConfig,
+		FrrBGPConfig:    readConfig("./conf/frr.conf"),
+		FrrBackend:      frrBackend,
 	}
-	meshover.Run(ctx, logger, settings)
+	if err := meshover.Run(ctx, logger, settings); err != nil {
+		panicError(logger, "failed to run meshover", err)
+	}
 }
