@@ -1,4 +1,4 @@
-package linuxwireguard
+package tunnel
 
 import (
 	//"encoding/binary"
@@ -13,19 +13,24 @@ import (
 	"github.com/gotti/meshover/spec"
 	"github.com/gotti/meshover/status"
 	"github.com/vishvananda/netlink"
+	"go.uber.org/zap"
 )
 
-type WireguardTunnel struct {
+// LinuxTunnel is a wireguard tunnel device
+type LinuxTunnel struct {
+	logger  *zap.Logger
 	selfIP  net.IP
 	link    netlink.Link
 	keyPair *spec.Curve25519KeyPair
 }
 
-func (t *WireguardTunnel) GetPublicKey() *spec.Curve25519Key {
+// GetPublicKey get public key of tunnel
+func (t *LinuxTunnel) GetPublicKey() *spec.Curve25519Key {
 	return t.keyPair.GetPublickey()
 }
 
-func NewTunnel(peers *status.ClientStatus) WireguardTunnel {
+// NewLinuxTunnel creates wiregard device
+func NewLinuxTunnel(logger *zap.Logger, peers *status.ClientStatus) LinuxTunnel {
 	laa := netlink.NewLinkAttrs()
 	laa.Name = peers.TunName
 	wg := &netlink.Wireguard{LinkAttrs: laa}
@@ -44,19 +49,20 @@ func NewTunnel(peers *status.ClientStatus) WireguardTunnel {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	tun := WireguardTunnel{keyPair: keypair, link: la, selfIP: peers.IPAddr.IP}
+	tun := LinuxTunnel{keyPair: keypair, link: la, selfIP: peers.IPAddr.IP}
 	tun.setPrivateKey(keypair.GetPrivatekey())
 	return tun
 }
 
-func (t *WireguardTunnel) Up() error {
+// Up set link status to up
+func (t *LinuxTunnel) Up() error {
 	if err := netlink.LinkSetUp(t.link); err != nil {
 		return fmt.Errorf("failed to up device, err=%w", err)
 	}
 	return nil
 }
 
-func (t *WireguardTunnel) setPrivateKey(k *spec.Curve25519Key) error {
+func (t *LinuxTunnel) setPrivateKey(k *spec.Curve25519Key) error {
 	tmpName := filepath.Join(os.TempDir(), "priv")
 	if err := os.WriteFile(tmpName, []byte(k.EncodeBase64()), 0700); err != nil {
 		return fmt.Errorf("failed to write private key, err=%w", err)
@@ -68,7 +74,8 @@ func (t *WireguardTunnel) setPrivateKey(k *spec.Curve25519Key) error {
 	return nil
 }
 
-func (t *WireguardTunnel) SetListenPort(port int) error {
+// SetListenPort sets wireguard underlay listen port
+func (t *LinuxTunnel) SetListenPort(port int) error {
 	err := exec.Command("wg", "set", t.link.Attrs().Name, "listen-port", fmt.Sprint(port)).Run()
 	if err != nil {
 		return fmt.Errorf("failed to set listenport, err=%w", err)
@@ -76,7 +83,8 @@ func (t *WireguardTunnel) SetListenPort(port int) error {
 	return nil
 }
 
-func (t *WireguardTunnel) Close() error {
+// Close deletes link
+func (t *LinuxTunnel) Close() error {
 	err := netlink.LinkDel(t.link)
 	if err != nil {
 		return fmt.Errorf("failed to delete link, err=%w", err)
@@ -84,7 +92,7 @@ func (t *WireguardTunnel) Close() error {
 	return nil
 }
 
-func (t *WireguardTunnel) setPeer(p *spec.Peer) error {
+func (t *LinuxTunnel) addPeer(p *spec.Peer) error {
 	u := p.GetUnderlayLinuxKernelWireguard()
 	o, err := exec.Command("wg", "set", t.link.Attrs().Name, "peer", u.GetPublicKey().EncodeBase64(), "allowed-ips", p.GetWireguardAddress().Format(), "endpoint", u.GetEndpoint().Format(), "persistent-keepalive", "10").CombinedOutput()
 	if err != nil {
@@ -93,7 +101,7 @@ func (t *WireguardTunnel) setPeer(p *spec.Peer) error {
 	return nil
 }
 
-func (t *WireguardTunnel) delPeer(p *spec.Peer) error {
+func (t *LinuxTunnel) delPeer(p *spec.Peer) error {
 	u := p.GetUnderlayLinuxKernelWireguard()
 	o, err := exec.Command("wg", "set", t.link.Attrs().Name, "peer", u.GetPublicKey().EncodeBase64(), "remove").CombinedOutput()
 	if err != nil {
@@ -102,7 +110,7 @@ func (t *WireguardTunnel) delPeer(p *spec.Peer) error {
 	return nil
 }
 
-func (t *WireguardTunnel) addRoute(p *spec.Peer) error {
+func (t *LinuxTunnel) addRoute(p *spec.Peer) error {
 	_, n, err := net.ParseCIDR(p.GetWireguardAddress().ToNetIPNet().String())
 	if err != nil {
 		log.Printf("failed to parse cidr, err=%s\n", err)
@@ -119,7 +127,7 @@ func (t *WireguardTunnel) addRoute(p *spec.Peer) error {
 	return nil
 }
 
-func (t *WireguardTunnel) delRoute(p *spec.Peer) error {
+func (t *LinuxTunnel) delRoute(p *spec.Peer) error {
 	_, n, err := net.ParseCIDR(p.GetWireguardAddress().ToNetIPNet().String())
 	if err != nil {
 		log.Printf("failed to parse cidr, err=%s\n", err)
@@ -133,48 +141,9 @@ func (t *WireguardTunnel) delRoute(p *spec.Peer) error {
 	return nil
 }
 
-func (t *WireguardTunnel) UpdatePeers(peersDiff []status.PeerDiffrence) {
-	for _, p := range peersDiff {
-		if ca := p.NewPeer.GetUnderlayLinuxKernelWireguard(); ca == nil {
-			fmt.Println("unknown underlay, skipping...", p)
-			continue
-		}
-		switch p.Diff {
-		case status.DiffTypeAdd:
-			{
-				if err := t.setPeer(p.NewPeer); err != nil {
-					log.Println(err)
-				}
-				if err := t.addRoute(p.NewPeer); err != nil {
-					log.Println(err)
-				}
-			}
-		case status.DiffTypeDelete:
-			{
-				if err := t.delPeer(p.OldPeer); err != nil {
-					log.Println(err)
-				}
-				if err := t.delRoute(p.OldPeer); err != nil {
-					log.Println(err)
-				}
-			}
-		case status.DiffTypeChange:
-			{
-				if err := t.delPeer(p.OldPeer); err != nil {
-					log.Println(err)
-				}
-				if err := t.delRoute(p.OldPeer); err != nil {
-					log.Println(err)
-				}
-				if err := t.setPeer(p.NewPeer); err != nil {
-					log.Println(err)
-				}
-				if err := t.addRoute(p.NewPeer); err != nil {
-					log.Println(err)
-				}
-			}
-		}
-	}
+// UpdatePeers updates peer
+func (t *LinuxTunnel) UpdatePeers(peersDiff []status.PeerDiffrence) error {
+	return updatePeers(t.logger, t, peersDiff)
 }
 
 /*
@@ -198,7 +167,8 @@ func generateLinkLocalV6(address net.IP) net.IP {
 }
 */
 
-func (t *WireguardTunnel) SetAddress(address net.IPNet) error {
+// SetAddress sets wireguard address of oneself
+func (t *LinuxTunnel) SetAddress(address net.IPNet) error {
 	addr, err := netlink.ParseAddr(address.String())
 	if err != nil {
 		return fmt.Errorf("parseaddr, err=%w", err)
@@ -207,8 +177,4 @@ func (t *WireguardTunnel) SetAddress(address net.IPNet) error {
 	t.selfIP = address.IP
 	netlink.LinkSetUp(t.link)
 	return nil
-}
-
-func (t *WireguardTunnel) SetAddressWithoutTouchingLinuxNetwork(address net.IP) {
-	t.selfIP = address
 }
