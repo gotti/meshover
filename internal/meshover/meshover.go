@@ -94,6 +94,8 @@ func Run(ctx context.Context, logger *zap.Logger, settings Settings) error {
 		if err != nil {
 			return fmt.Errorf("failed to create frr instance, err=%w", err)
 		}
+	default:
+		return fmt.Errorf("no such backend")
 	}
 	defer func() {
 		err := f.Kill()
@@ -179,7 +181,9 @@ func Run(ctx context.Context, logger *zap.Logger, settings Settings) error {
 					}
 					iprouteInstance.UpdateSBRPeer(sbrdiffs)
 					fmt.Println("updating...", frrdiff)
-					tun.UpdatePeers(diff)
+					if err := tun.UpdatePeers(diff); err != nil {
+						logger.Error("failed to update tunnel peer", zap.Error(err))
+					}
 					c <- frrdiff
 				}
 			case <-watchctx.Done():
