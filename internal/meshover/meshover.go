@@ -15,6 +15,7 @@ import (
 	"github.com/gotti/meshover/gre"
 	"github.com/gotti/meshover/grpcclient"
 	"github.com/gotti/meshover/iproute"
+	"github.com/gotti/meshover/kernel"
 	"github.com/gotti/meshover/pkg/statuspusher"
 	"github.com/gotti/meshover/spec"
 	"github.com/gotti/meshover/status"
@@ -33,10 +34,14 @@ type Settings struct {
 	FrrDaemonConfig string
 	FrrBGPConfig    string
 	FrrBackend      frr.BackendType
+	KernelSetting   *kernel.Settings
 }
 
 // Run runs meshover
 func Run(ctx context.Context, logger *zap.Logger, settings Settings) error {
+	if _, err := kernel.NewInstance(*settings.KernelSetting); err != nil {
+		logger.Panic("failed to create new kernel instance", zap.Error(err))
+	}
 	stat := status.NewClient(settings.HostName, "meshover0", &spec.Peers{})
 	//generate wireguard instance
 	//generate keypair

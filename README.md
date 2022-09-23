@@ -4,15 +4,19 @@
 
 IPv6を使ってWireguardでフルメッシュVPNを構成する。tailscaleやcalicoと似たツール。
 
+tailscaleと違うのはmeshoverを導入したノードに直接接続していないVM/コンテナをネットワークに接続できること。これはBGPを全ノードが喋ることで実現している。VM/コンテナの接続はKubernetesのCoil/PureLBとの連携を想定している。
+
 特徴
 - 自動構成IPアドレス
   - 現在はホスト名をキーとして一意なIPアドレスがコントローラから割り当てられる。
 - FRRを使ったBGP unnumbered相互接続
+- KubernetesのCoil/PureLBとの連携
 
 ## 何を解決したい？
 
 - 同一L2の上にあるDHCPなどで割り当てられたアドレスは、そのL2でしか使えない。
 - 別の場所へのL2延伸はやりたくない
+- そのためサーバ間の接続は全てL3のネットワークを利用するようにしたい。
 - tailscaleを使ってみてかなり便利だった
 - tailscaleのIPアドレスでKubernetesを動かせばいいのでは？
   - 実装してから気づいたが後述するallowed-ipsの制限のため、この構成はおそらく無理
