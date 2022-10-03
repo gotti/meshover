@@ -369,6 +369,8 @@ github.com/envoyproxy/protoc-gen-validate v0.6.11 h1:HNGBeEpNP25KhqhtcvxmIGaRoa7
 github.com/envoyproxy/protoc-gen-validate v0.6.11/go.mod h1:0ZMblUx0cxNoWRswEEXoj9kHBmqX8pxGweMiyIAfR6A=
 github.com/envoyproxy/protoc-gen-validate v0.6.12 h1:fm1ASBISy+M8UPDDwR4Wj4ZiaiGiFuO9ZTxOiw2U6oc=
 github.com/envoyproxy/protoc-gen-validate v0.6.12/go.mod h1:qEySVqXrEugbHKvmhI8ZqtQi75/RHSSRNpffvB4I6Bw=
+github.com/envoyproxy/protoc-gen-validate v0.6.13 h1:TvDcILLkjuZV3ER58VkBmncKsLUBqBDxra/XctCzuMM=
+github.com/envoyproxy/protoc-gen-validate v0.6.13/go.mod h1:qEySVqXrEugbHKvmhI8ZqtQi75/RHSSRNpffvB4I6Bw=
 github.com/evanphx/json-patch v4.9.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/evanphx/json-patch v4.11.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
