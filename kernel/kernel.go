@@ -7,22 +7,26 @@ import (
 	"strings"
 )
 
-//NatSetting is setting to enable nat, for miscellaneous kubernetes pods
+// Instance is kernel instance
+type Instance interface {
+}
+
+// NatSetting is setting to enable nat, for miscellaneous kubernetes pods
 type NatSetting struct {
 	SourceIPsForNat   []*net.IPNet
 	DestinationDevice string
 }
 
-//Settings have kernel Parameter Settings
+// Settings have kernel Parameter Settings
 type Settings struct {
 	//CoilSupport defines wheather creating coil vrf
 	CoilSupport bool
 	Nat         *NatSetting
 }
 
-//InstanceKernel implements Instance
+// InstanceKernel implements Instance
 type InstanceKernel struct {
-	settings Settings
+	settings *Settings
 }
 
 func execCommand(command string, args ...string) error {
@@ -33,8 +37,11 @@ func execCommand(command string, args ...string) error {
 	return nil
 }
 
-//NewInstance creates instance and apply initial settings
-func NewInstance(settings Settings) (*InstanceKernel, error) {
+// NewKernelInstance creates instance and apply initial settings
+func NewKernelInstance(settings *Settings) (*InstanceKernel, error) {
+	if settings == nil {
+		return nil, nil
+	}
 	if err := execCommand("sysctl", "-w", "net.ipv4.ip_forward=1"); err != nil {
 		return nil, fmt.Errorf("failed to enable ipv4 forwarding")
 	}
@@ -59,4 +66,13 @@ func NewInstance(settings Settings) (*InstanceKernel, error) {
 		}
 	}
 	return &InstanceKernel{settings: settings}, nil
+}
+
+// InstanceDummy is a dummy instance do nothing
+type InstanceDummy struct {
+}
+
+// NewDummyInstance creates Dummy Instance
+func NewDummyInstance() *InstanceDummy {
+	return &InstanceDummy{}
 }

@@ -39,7 +39,10 @@ type Settings struct {
 
 // Run runs meshover
 func Run(ctx context.Context, logger *zap.Logger, settings Settings) error {
-	if _, err := kernel.NewInstance(*settings.KernelSetting); err != nil {
+	if settings.KernelSetting == nil {
+		kernel.NewDummyInstance()
+	}
+	if _, err := kernel.NewKernelInstance(settings.KernelSetting); err != nil {
 		logger.Panic("failed to create new kernel instance", zap.Error(err))
 	}
 	stat := status.NewClient(settings.HostName, "meshover0", &spec.Peers{})

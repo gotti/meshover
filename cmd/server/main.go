@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gotti/meshover/pkg/ip"
+	"github.com/gotti/meshover/pkg/keymanager"
 	"github.com/gotti/meshover/spec"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -25,13 +26,16 @@ var (
 	stateFilePath         = flag.String("statefile", "state", "filename")
 	wireguardAddressRange = flag.String("wgaddress", "10.192.0.0/12", "wireguard peer address")
 	assignAddressRange    = flag.String("assignaddress", "10.128.0.0/12,fd00:beef:beef::/48", "list of cidr ipaddress")
+	adminPassword         = flag.String("password", "", "strong password")
 )
 
 type controlServer struct {
 	stateFilePath string
 	mtx           sync.Mutex
 	spec.UnimplementedControlPlaneServiceServer
+	spec.UnimplementedAdministratorServiceServer
 	peers *spec.Peers
+	keyman keymanager.Manager
 }
 
 func (c *controlServer) SaveState() error {
@@ -66,6 +70,11 @@ func (c *controlServer) LoadState() error {
 		return fmt.Errorf("failed to unmarshal for loading state, err=%w", err)
 	}
 	c.peers = buf
+	k, err := keymanager.NewAPIKeys("./keys")
+	if err != nil {
+		return fmt.Errorf("failed to create api keys, err=%w", err)
+	}
+	c.keyman = k
 	return nil
 }
 
@@ -115,8 +124,6 @@ func (c *controlServer) AddressAssign(ctx context.Context, in *spec.AddressAssig
 		}
 		addresses = append(addresses, spec.NewAddressCIDR(*i))
 	}
-	fmt.Println("@@@@wireguard@@@@")
-	fmt.Println(wgAddress)
 	ret := spec.AddressAssignResponse{WireguardAddress: spec.NewAddressCIDR(*wgAddress), Address: addresses, Asnumber: &spec.ASN{Number: ip.GenerateRandomASN()}}
 	return &ret, nil
 }
@@ -133,6 +140,26 @@ func (c *controlServer) RegisterPeer(ctx context.Context, in *spec.RegisterPeerR
 	return ret, nil
 }
 
+func (c *controlServer) GenerateAgentKey(ctx context.Context, req *spec.GenerateAgentKeyRequest) (*spec.GenerateAgentKeyResponse, error) {
+	k, err := c.keyman.GenerateKey()
+	if err != nil {
+		return nil, status.Errorf(codes.Aborted, "random number generation failed")
+	}
+	return &spec.GenerateAgentKeyResponse{AgentKey: k}, nil
+}
+
+func (c *controlServer) ListAgentKey(context.Context, *spec.ListAgentKeyRequest) (*spec.ListAgentKeyResponse, error) {
+	d := c.keyman.GetKeysDigest()
+	return &spec.ListAgentKeyResponse{Keys: d}, nil
+}
+
+func (c *controlServer) RevokeAgentKey(ctx context.Context, req *spec.RevokeAgentKeyRequest) (*spec.RevokeAgentKeyResponse, error) {
+	if err := c.keyman.RemoveKey(req.GetId()); err != nil {
+		return nil, status.Errorf(codes.Aborted, "revokation failed, maybe specified key is not exists")
+	}
+	return &spec.RevokeAgentKeyResponse{Ok: true}, nil
+}
+
 func loadAndSanitizeArgs() {
 	flag.Parse()
 	if _, _, err := net.ParseCIDR(*wireguardAddressRange); err != nil {
@@ -143,29 +170,63 @@ func loadAndSanitizeArgs() {
 			log.Fatalf("unrecognized assignAddressRange, err=%s", err)
 		}
 	}
+	if *adminPassword == ""{
+		log.Fatalln("please set admin password with -adminPassword")
+	}
 }
 
 type authorizer struct {
-	token  string
+	password  string
 	server *controlServer
 }
 
-func (a *authorizer) Context(ctx context.Context, info *grpc.UnaryServerInfo) (context.Context, error) {
-	if info.FullMethod == "/ControlPlaneService/AddressAssign" {
-	}
-	_, ok := metadata.FromIncomingContext(ctx)
+func (a *authorizer) passwordAuth(ctx context.Context, info *grpc.UnaryServerInfo) (context.Context, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, grpc.Errorf(codes.Unauthenticated, "Authorization required: no context metadata")
+	}
+	fmt.Println(md.Get("Bearer"))
+	if len(md.Get("Bearer")) != 1 {
+		return nil, grpc.Errorf(codes.InvalidArgument, "Invalid Bearer token, check you send Bearer just one")
+	}
+	if md.Get("Bearer")[0] != a.password {
+		return nil, grpc.Errorf(codes.Unauthenticated, "Wrong Bearer")
+	}
+	return ctx, nil
+}
+
+func (a *authorizer) tokenAuth(ctx context.Context, info *grpc.UnaryServerInfo) (context.Context, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, grpc.Errorf(codes.Unauthenticated, "Authorization required: no context metadata")
+	}
+	fmt.Println(md.Get("Bearer"))
+	if len(md.Get("Bearer")) != 1 {
+		return nil, grpc.Errorf(codes.InvalidArgument, "Invalid Bearer token, check you send Bearer just one")
+	}
+	if err := a.server.keyman.IsValid(md.Get("Bearer")[0]); err != nil {
+		return nil, grpc.Errorf(codes.Unauthenticated, "Wrong Bearer")
 	}
 	return ctx, nil
 }
 
 func (a *authorizer) HandleUnary(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	ctx, err := a.Context(ctx, info)
-	if err != nil {
-		return nil, err
+	switch {
+		case strings.HasPrefix(info.FullMethod, "/ControlPlaneService/"):
+			ctx, err := a.tokenAuth(ctx, info)
+			if err != nil {
+				return nil, err
+			}
+			return handler(ctx, req)
+		case strings.HasPrefix(info.FullMethod, "/AdministratorService/"):
+			ctx, err := a.passwordAuth(ctx, info)
+			if err != nil {
+				return nil, err
+			}
+			return handler(ctx, req)
+		default:
+			return nil, grpc.Errorf(codes.NotFound, "no such endpoint")
 	}
-	return handler(ctx, req)
 }
 
 func main() {
@@ -176,12 +237,12 @@ func main() {
 	if err := server.LoadState(); err != nil {
 		log.Fatalf("failed to load state, err=%s\n", err)
 	}
-	fmt.Printf("%+v\n", server.peers)
-	//a := authorizer{token: "a", server: &server}
+	a := authorizer{password: *adminPassword, server: &server}
 	s := grpc.NewServer(
-	//grpc.UnaryInterceptor(a.HandleUnary),
+		grpc.UnaryInterceptor(a.HandleUnary),
 	)
 	spec.RegisterControlPlaneServiceServer(s, &server)
+	spec.RegisterAdministratorServiceServer(s, &server)
 	lis, err := net.Listen("tcp", *listenAddress)
 	if err != nil {
 		log.Fatalf("failed to listen, err=%s\n", err)
