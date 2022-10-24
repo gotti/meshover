@@ -31,8 +31,6 @@ var (
 	coilNatSources    = flag.String("coilnatsources", "", "10.128.0.0/16,10.129.0.0/16")
 	rawfrrBackend     = flag.String("frr", "", "select one of following: none, dockersdk, nerdctl")
 	hostName          = flag.String("hostname", "", "hostname")
-	capabl            = flag.String("cap", "", "wireguard,linuxkernelwireguard")
-	staticRoutes      = flag.String("static", "", "192.168.0.0/16")
 	rawRouteGathering = flag.String("gathering", "", "1.1.1.0/27,1.1.2.0/29")
 )
 
@@ -141,6 +139,7 @@ func createKernelNatSetting(logger *zap.Logger) *kernel.NatSetting {
 		logger.Info("using coil support", zap.String("nat sources", *coilNatSources))
 	} else if !*coilSupport {
 		logger.Info("coil support disabled")
+		return nil
 	} else {
 		logger.Panic("coilsupport is enabled but nat is disabled. This feature is currently unsupported, please specify nat ip range.")
 	}
