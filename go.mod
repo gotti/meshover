@@ -8,7 +8,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v0.6.13
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/prometheus/client_golang v1.13.0
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/cobra v1.6.0
 	github.com/vishvananda/netlink v1.1.1-0.20211118161826-650dca95af54
 	go.uber.org/zap v1.23.0
 	golang.org/x/crypto v0.1.0
@@ -37,7 +37,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.2.0 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/moby/locker v1.0.1 // indirect
