@@ -29,6 +29,7 @@ var (
 	statusserver      = flag.String("statusserver", "", "localhost:8080")
 	coilSupport       = flag.Bool("coiladvertise", false, "if set, meshover advertise routes added by coil")
 	coilNatSources    = flag.String("coilnatsources", "", "10.128.0.0/16,10.129.0.0/16")
+	agentToken        = flag.String("agenttoken", "", "")
 	rawfrrBackend     = flag.String("frr", "", "select one of following: none, dockersdk, nerdctl")
 	hostName          = flag.String("hostname", "", "hostname")
 	rawRouteGathering = flag.String("gathering", "", "1.1.1.0/27,1.1.2.0/29")
@@ -184,6 +185,7 @@ func main() {
 		HostName:        *hostName,
 		ControlServer:   *controlserver,
 		StatusServer:    *statusserver,
+		AgentToken:      *agentToken,
 		UnderlayIP:      addrs[0],
 		RouteGathering:  routeGathering,
 		FrrVtyshConfig:  frrVtyshConfig,

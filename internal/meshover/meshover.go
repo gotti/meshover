@@ -28,6 +28,7 @@ type Settings struct {
 	HostName        string
 	ControlServer   string
 	StatusServer    string
+	AgentToken      string
 	UnderlayIP      *net.IPNet
 	RouteGathering  []*net.IPNet
 	FrrVtyshConfig  string

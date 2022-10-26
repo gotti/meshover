@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -23,7 +24,7 @@ import (
 
 var (
 	listenAddress         = flag.String("listen", "", "example: 0.0.0.0:8080")
-	stateFilePath         = flag.String("statefile", "state", "filename")
+	stateDir              = flag.String("statefile", "state", "filename")
 	wireguardAddressRange = flag.String("wgaddress", "10.192.0.0/12", "wireguard peer address")
 	assignAddressRange    = flag.String("assignaddress", "10.128.0.0/12,fd00:beef:beef::/48", "list of cidr ipaddress")
 	adminPassword         = flag.String("password", "", "strong password")
@@ -58,7 +59,7 @@ func (c *controlServer) LoadState() error {
 		f, err := os.Create(c.stateFilePath)
 		defer f.Close()
 		if err != nil {
-			return fmt.Errorf("failed to create state file")
+			return fmt.Errorf("failed to create state file, err=%w", err)
 		}
 	}
 	f, err := os.ReadFile(c.stateFilePath)
@@ -70,7 +71,7 @@ func (c *controlServer) LoadState() error {
 		return fmt.Errorf("failed to unmarshal for loading state, err=%w", err)
 	}
 	c.peers = buf
-	k, err := keymanager.NewAPIKeys("./keys")
+	k, err := keymanager.NewAPIKeys(filepath.Join(*stateDir, "keys"))
 	if err != nil {
 		return fmt.Errorf("failed to create api keys, err=%w", err)
 	}
@@ -233,7 +234,7 @@ func main() {
 	ip.SetSeed(time.Now().UnixNano())
 	loadAndSanitizeArgs()
 	server := controlServer{}
-	server.stateFilePath = *stateFilePath
+	server.stateFilePath = filepath.Join(*stateDir, "clients")
 	if err := server.LoadState(); err != nil {
 		log.Fatalf("failed to load state, err=%s\n", err)
 	}
