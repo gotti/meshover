@@ -13,10 +13,11 @@ import (
 )
 
 type GreStatus struct {
-	log     *zap.Logger
-	counter int
-	selfIP  net.IP
-	tunnels []*GreTunnel
+	log        *zap.Logger
+	counter    int
+	underlayIP net.IPNet
+	overlayIP  net.IPNet
+	tunnels    []*GreTunnel
 }
 
 type GreTunnel struct {
@@ -30,8 +31,8 @@ var (
 	errFileExists = fmt.Errorf("tunnel file exists")
 )
 
-func NewGreInstance(log *zap.Logger, selfIP net.IP) *GreStatus {
-	return &GreStatus{log: log, selfIP: selfIP}
+func NewGreInstance(log *zap.Logger, underlayIP, overlayIP net.IPNet) *GreStatus {
+	return &GreStatus{log: log, underlayIP: underlayIP, overlayIP: overlayIP}
 }
 
 func addressCIDRArrayToIPNetArray(a []*spec.AddressCIDR) []net.IPNet {
@@ -48,10 +49,10 @@ func (g *GreStatus) addTunnelPeer(p *status.PeerDiffrence) error {
 	attr.Name = tun
 	gretun := &netlink.Gretun{
 		LinkAttrs: attr,
-		Local:     g.selfIP,
+		Local:     g.underlayIP.IP,
 		Remote:    p.NewPeer.GetWireguardAddress().ToNetIPNet().IP,
 	}
-	g.log.Debug("connection info", zap.String("self", g.selfIP.String()), zap.String("target", p.NewPeer.GetWireguardAddress().Format()), zap.String("tun", gretun.LinkAttrs.Name))
+	g.log.Debug("connection info", zap.String("self", g.underlayIP.String()), zap.String("target", p.NewPeer.GetWireguardAddress().Format()), zap.String("tun", gretun.LinkAttrs.Name))
 	if err := netlink.LinkAdd(gretun); err != nil {
 		if strings.Contains(err.Error(), "file exists") {
 			if err := netlink.LinkDel(gretun); err != nil {
@@ -60,6 +61,9 @@ func (g *GreStatus) addTunnelPeer(p *status.PeerDiffrence) error {
 			return errFileExists
 		}
 		log.Fatalln("failed to create gre tunnel", err)
+	}
+	if err := netlink.AddrAdd(gretun, &netlink.Addr{IPNet: &g.overlayIP, Label: ""}); err != nil {
+		log.Fatalln("failed to set address", err)
 	}
 	if err := netlink.LinkSetUp(gretun); err != nil {
 		log.Fatalln("failed to up gre tunnel", err)
@@ -94,7 +98,7 @@ func (g *GreStatus) updateTunnelPeer(p *status.PeerDiffrence) error {
 	attr.Name = searched.TunName
 	gretun := &netlink.Gretun{
 		LinkAttrs: attr,
-		Local:     g.selfIP,
+		Local:     g.underlayIP.IP,
 		Remote:    p.NewPeer.GetWireguardAddress().ToNetIPNet().IP,
 	}
 	if err := netlink.LinkModify(gretun); err != nil {

@@ -8,7 +8,7 @@ import (
 	"github.com/gotti/meshover/spec"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 type Client struct {
@@ -19,14 +19,16 @@ type Client struct {
 	grpcConn      spec.ControlPlaneServiceClient
 }
 
-func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlserver string, publickey *spec.Curve25519Key, underlayAddress *spec.AddressAndPort, routeGather []*net.IPNet) (*Client, *spec.ASN, error) {
-	conn, err := grpc.Dial(controlserver, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlserver string, agentToken string, publickey *spec.Curve25519Key, underlayAddress *spec.AddressAndPort, routeGather []*net.IPNet) (*Client, *spec.ASN, error) {
+	conn, err := grpc.Dial(controlserver, grpc.WithInsecure())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to connect to controlserver, err=%w", err)
 	}
 	c := spec.NewControlPlaneServiceClient(conn)
 	adrreq := new(spec.AddressAssignRequest)
 	adrreq.Name = hostName
+	md := metadata.New(map[string]string{"Bearer": agentToken})
+	ctx = metadata.NewOutgoingContext(ctx, md)
 	r, err := c.AddressAssign(ctx, adrreq)
 	fmt.Printf("assigned address %s, wg address %s\n", r.GetAddress(), r.GetWireguardAddress())
 	if err != nil {
@@ -37,19 +39,25 @@ func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlser
 	for i := range r.GetAddress() {
 		additionalIPs = append(additionalIPs, r.GetAddress()[i].ToNetIPNet())
 	}
-	req := new(spec.RegisterPeerRequest)
-	req.Peer = new(spec.Peer)
-	req.Peer.WireguardAddress = r.GetWireguardAddress()
-	req.Peer.Address = r.GetAddress()
-	req.Peer.Asnumber = r.GetAsnumber()
-	req.Peer.Name = hostName
 	sbr := &spec.SourceBasedRoutingOption{SourceIPRange: []*spec.AddressCIDR{}}
 	for _, r := range routeGather {
 		sbr.SourceIPRange = append(sbr.SourceIPRange, spec.NewAddressCIDR(*r))
 	}
-	req.Peer.SbrOption = sbr
-	wg := &spec.UnderlayLinuxKernelWireguard{Endpoint: underlayAddress, PublicKey: publickey}
-	req.Peer.Underlay = &spec.Peer_UnderlayLinuxKernelWireguard{UnderlayLinuxKernelWireguard: wg}
+	req := &spec.RegisterPeerRequest{
+		Peer: &spec.Peer{
+			WireguardAddress: r.GetWireguardAddress(),
+			Underlay: &spec.Peer_UnderlayLinuxKernelWireguard{
+				UnderlayLinuxKernelWireguard: &spec.UnderlayLinuxKernelWireguard{
+					Endpoint:  underlayAddress,
+					PublicKey: publickey,
+				},
+			},
+			Address:   r.GetAddress(),
+			Asnumber:  r.GetAsnumber(),
+			Name:      hostName,
+			SbrOption: sbr,
+		},
+	}
 	res, err := c.RegisterPeer(ctx, req)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to register peer, err=%w", err)

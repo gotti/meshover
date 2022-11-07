@@ -23,45 +23,9 @@ tailscaleと違うのはmeshoverを導入したノードに直接接続してい
 - BGPを喋らせればCalicoやMetalLBと接続できて完璧なのでは？
   - CalicoとMetalLBは面倒なのでCoilとPureLBになった
 
-## 構成の例(できたらいいな)
+## Getting Started
 
-### IPアドレス割り当て
-
-- 1.1.1.0/29 グローバルIP
-- 192.168.0.0/16 広報しない。別の場所であれば重複可能。
-- 10.0.0.0/8 meshoverで広報する。重複不可
-  - 10.1.0.0/16 Pod IP
-  - 10.2.0.0/16 Service IP
-  - 10.128.0.0/12 meshover Node IP
-
-### 物理構成
-
-- Home1 (192.168.0.1/24, 2000::1/64)
-  - Node1 (192.168.0.2/24, 2000:hoge/64)
-    - 対外接続ノード。上流から割り当てられたグローバルIPは1.1.1.0/29
-  - Node2 (192.168.0.3/24, 2000:huga/64)
-- Home2 (192.168.0.1/24, 2001::1/64)
-  - Node3 (192.168.0.2/24, 2001:hoge/64)
-  - Node4 (192.168.0.3/24, 2001:huga/64)
-    - Tailscale接続ノード
-
-### 論理構成
-
-- Node1 (10.128.0.1/32)
-  - 対外接続ノード
-  - TODOで説明するアドレス収集を1.1.1.0/29で設定
-  - Kubernetes Node1
-  - Pod IP広報
-- Node2 (10.128.0.2/32)
-  - Kubernetes Node2
-  - Pod IP広報
-- Node3 (10.128.0.3/32)
-  - Kubernetes Node3
-  - Pod IP広報
-- Node4 (10.128.0.4/32)
-  - Tailscaleと接続
-    - meshoverに100.64.0.0/10を広報
-    - Tailscale側に10.0.0.0/8を広報
+[Getting Started](./docs/getting-started.md)
 
 ## 開発状況
 
