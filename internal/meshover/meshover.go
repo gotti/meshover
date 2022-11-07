@@ -58,7 +58,7 @@ func Run(ctx context.Context, logger *zap.Logger, settings Settings) error {
 	}()
 
 	//send query for getting meshover ip
-	client, asn, err := grpcclient.NewClient(ctx, logger, settings.HostName, settings.ControlServer, tun.GetPublicKey(), &spec.AddressAndPort{Ipaddress: spec.NewAddress(settings.UnderlayIP.IP), Port: 12912}, settings.RouteGathering)
+	client, asn, err := grpcclient.NewClient(ctx, logger, settings.HostName, settings.ControlServer, settings.AgentToken, tun.GetPublicKey(), &spec.AddressAndPort{Ipaddress: spec.NewAddress(settings.UnderlayIP.IP), Port: 12912}, settings.RouteGathering)
 	if err != nil {
 		return fmt.Errorf("failed to create new grpc connection, err=%w", err)
 	}
@@ -83,7 +83,7 @@ func Run(ctx context.Context, logger *zap.Logger, settings Settings) error {
 	c := make(chan []status.FrrPeerDiffrence)
 
 	gre.Clean()
-	greInstance := gre.NewGreInstance(logger, stat.IPAddr.IP)
+	greInstance := gre.NewGreInstance(logger, stat.IPAddr, *client.AdditionalIPs[0])
 	defer gre.Clean()
 
 	conf := frr.NewFrrConfig(settings.HostName, client.AdditionalIPs[0].IP.String(), settings.FrrBGPConfig, settings.FrrDaemonConfig, settings.FrrVtyshConfig)

@@ -65,6 +65,8 @@ func (c *APIKeys) AddKey(key *spec.AgentKey) error {
 
 // GenerateKey generate new key
 func (c *APIKeys) GenerateKey() (*spec.AgentKey, error) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 	var maxid int64 = 0
 	for _, k := range c.keys.Keys {
 		if k.GetId() > maxid {
@@ -99,7 +101,9 @@ func (c *APIKeys) RemoveKey(keyID int64) error {
 func (c *APIKeys) IsValid(key string) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
+	fmt.Println("arg key", key)
 	for _, k := range c.keys.Keys {
+		fmt.Println("raw key", k.GetKey())
 		if k.GetKey() == key {
 			return nil
 		}
@@ -109,8 +113,6 @@ func (c *APIKeys) IsValid(key string) error {
 
 // savekeys saves keys
 func (c *APIKeys) savekeys() error {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
 	buf, err := proto.Marshal(c.keys)
 	if err != nil {
 		return fmt.Errorf("failed to marshal for saving token, err=%w", err)
@@ -123,8 +125,6 @@ func (c *APIKeys) savekeys() error {
 
 // loadKeys loads keys
 func (c *APIKeys) loadKeys() error {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
 	if _, err := os.Stat(c.path); os.IsNotExist(err) {
 		f, err := os.OpenFile(c.path, os.O_CREATE|os.O_RDWR, 0600)
 		if err != nil {

@@ -8,7 +8,6 @@ import (
 	"github.com/gotti/meshover/spec"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -21,7 +20,7 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlserver string, agentToken string, publickey *spec.Curve25519Key, underlayAddress *spec.AddressAndPort, routeGather []*net.IPNet) (*Client, *spec.ASN, error) {
-	conn, err := grpc.Dial(controlserver, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(controlserver, grpc.WithInsecure())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to connect to controlserver, err=%w", err)
 	}
