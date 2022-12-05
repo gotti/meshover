@@ -333,6 +333,8 @@ github.com/envoyproxy/protoc-gen-validate v0.8.0 h1:eZxAlfY5c/HTcV7aN9EUL3Ej/zY/
 github.com/envoyproxy/protoc-gen-validate v0.8.0/go.mod h1:z+FSjkCuAJYqUS2daO/NBFgbCao8JDHcYcpnFfD00cI=
 github.com/envoyproxy/protoc-gen-validate v0.9.0 h1:wyv+mWIshClA4g6hTlKD9xb6fiNAnDu3+8qYf7KSuSE=
 github.com/envoyproxy/protoc-gen-validate v0.9.0/go.mod h1:aUb/JIPT9p8VQ1hMxCrB3/NZSvKoF7fPIE1ULgCIVz0=
+github.com/envoyproxy/protoc-gen-validate v0.9.1 h1:PS7VIOgmSVhWUEeZwTe7z7zouA22Cr590PzXKbZHOVY=
+github.com/envoyproxy/protoc-gen-validate v0.9.1/go.mod h1:OKNgG7TCp5pF4d6XftA0++PMirau2/yoOwVac3AbF2w=
 github.com/evanphx/json-patch v4.9.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/form3tech-oss/jwt-go v3.2.2+incompatible/go.mod h1:pbq4aXjuKjdthFRnoDwaVPLA+WlJuPGy+QneDUgJi2k=
