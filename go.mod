@@ -9,7 +9,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20220909204839-494a5a6aca78
 	github.com/prometheus/client_golang v1.14.0
 	github.com/spf13/cobra v1.6.1
-	github.com/vishvananda/netlink v1.1.1-0.20211118161826-650dca95af54
+	github.com/vishvananda/netlink v1.2.1-beta.2.0.20221107222636-d3c0a2caa559
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.4.0
 	golang.zx2c4.com/wireguard v0.0.20201121
