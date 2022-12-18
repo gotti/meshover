@@ -32,10 +32,25 @@ router bgp {{ .ASN }}
  {{ end }} 
 !
  address-family ipv4 unicast
-  redistribute connected route-map deny-privateip
   redistribute kernel route-map deny-privateip
+  redistribute connected route-map deny-privateip
+  table-map kernel-in
+  import vrf coilex
  exit-address-family
 !
+router bgp {{ .ASN }} vrf coilex
+ !
+ address-family ipv4 unicast
+  redistribute kernel
+ exit-address-family
+exit
+!
+route-map kernel-in deny 40
+ match source-vrf coilex
+exit
+!
+route-map kernel-in permit 256
+
 exit
 !
 ip prefix-list private-ips1 seq 5 permit 192.168.0.0/16 ge 16
@@ -45,8 +60,6 @@ route-map deny-privateip deny 15
 exit
 !
 route-map deny-privateip permit 256
-exit
-!
 !
 !
 !

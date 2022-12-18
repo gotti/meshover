@@ -1,8 +1,8 @@
 # Meshover
 
-貧者のIP ClosもどきDCを構築するためのツール。
+貧者のDCを構築するためのツール。
 
-IPv6を使ってWireguardでフルメッシュVPNを構成する。tailscaleやcalicoと似たツール。
+IPv6を使ってWireguardでフルメッシュVPNを構成し、BGPでピアリングを行う。tailscaleやcalicoと似たツール。
 
 tailscaleと違うのはmeshoverを導入したノードに直接接続していないVM/コンテナをネットワークに接続できること。これはBGPを全ノードが喋ることで実現している。VM/コンテナの接続はKubernetesのCoil/PureLBとの連携を想定している。
 
@@ -56,40 +56,6 @@ tailscaleと違うのはmeshoverを導入したノードに直接接続してい
   - Wireguardはallowed-ipsがACLの働きをすると同時にデバイス内でのルーティングにも使われる(1つのデバイスで複数の接続を張れるため)。したがって複数の接続それぞれを0.0.0.0/0で許可できず、BGPでルーティングしてもホストのIPアドレスからの通信以外はその経路を使えない。これをなんとかするためにGREでもう1段トンネルを張っている。
   - link localアドレスが割り当てられるのでBGP unnumberedが可能
   - 参考: https://www.infrastudy.com/?p=1065
-
-## 使い方
-
-### Requirements
-
-- グローバルなIPv6が割り当てられたパソコン n台
-  - 検証環境はUbuntu Server 20.04 LTS
-  - docker, wireguard-tools
-
-### ビルド
-
-> **Warning**
-> 開発中のためお行儀が悪いです。
-> 認証やファイアウォールが実装されていません。
-> 安全な開発環境でのみ利用してください。
-
-
-```bash
-make # client と server が生成されます
-```
-
-サーバを、ノード全てから接続可能なパソコンで動かす。
-これはコントローラでありノードの公開鍵と自動構成IPアドレス/ASN、wireguard接続用IPv6アドレスなどを管理します。
-
-```bash
-./server -listen 0.0.0.0:12384
-```
-
-クライアントをメッシュ接続したいノードで動かします。
-
-```bash
-vim conf/frr.conf #FRRの設定テンプレートが存在することを確認し、必要あれば編集
-sudo ./client -controlserver <IP Address to server>:12384
-```
 
 ## TODO
 
