@@ -50,9 +50,9 @@ func (g *GreStatus) addTunnelPeer(p *status.PeerDiffrence) error {
 	gretun := &netlink.Gretun{
 		LinkAttrs: attr,
 		Local:     g.underlayIP.IP,
-		Remote:    p.NewPeer.GetWireguardAddress().ToNetIPNet().IP,
+		Remote:    p.NewPeer.GetTunnelAddress().ToNetIPNet().IP,
 	}
-	g.log.Debug("connection info", zap.String("self", g.underlayIP.String()), zap.String("target", p.NewPeer.GetWireguardAddress().Format()), zap.String("tun", gretun.LinkAttrs.Name))
+	g.log.Debug("connection info", zap.String("self", g.underlayIP.String()), zap.String("target", p.NewPeer.GetTunnelAddress().Format()), zap.String("tun", gretun.LinkAttrs.Name))
 	if err := netlink.LinkAdd(gretun); err != nil {
 		if strings.Contains(err.Error(), "file exists") {
 			if err := netlink.LinkDel(gretun); err != nil {
@@ -68,7 +68,7 @@ func (g *GreStatus) addTunnelPeer(p *status.PeerDiffrence) error {
 	if err := netlink.LinkSetUp(gretun); err != nil {
 		log.Fatalln("failed to up gre tunnel", err)
 	}
-	gt := &GreTunnel{TunName: tun, link: gretun, peerName: p.NewPeer.GetName(), OppositeIP: *p.NewPeer.WireguardAddress.ToNetIPNet()}
+	gt := &GreTunnel{TunName: tun, link: gretun, peerName: p.NewPeer.GetName(), OppositeIP: *p.NewPeer.GetTunnelAddress().ToNetIPNet()}
 	g.tunnels = append(g.tunnels, gt)
 	fmt.Println("tunnels")
 	for _, t := range g.tunnels {
@@ -99,7 +99,7 @@ func (g *GreStatus) updateTunnelPeer(p *status.PeerDiffrence) error {
 	gretun := &netlink.Gretun{
 		LinkAttrs: attr,
 		Local:     g.underlayIP.IP,
-		Remote:    p.NewPeer.GetWireguardAddress().ToNetIPNet().IP,
+		Remote:    p.NewPeer.GetTunnelAddress().ToNetIPNet().IP,
 	}
 	if err := netlink.LinkModify(gretun); err != nil {
 		return fmt.Errorf("failed to modify link, err=%w", err)

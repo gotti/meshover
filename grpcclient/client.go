@@ -13,7 +13,8 @@ import (
 
 type Client struct {
 	context       context.Context
-	OverlayIP     *net.IPNet
+	TunnelIP      *net.IPNet
+	BaseIP        *net.IPNet
 	AdditionalIPs []*net.IPNet
 	conn          *grpc.ClientConn
 	grpcConn      spec.ControlPlaneServiceClient
@@ -30,14 +31,12 @@ func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlser
 	md := metadata.New(map[string]string{"Bearer": agentToken})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 	r, err := c.AddressAssign(ctx, adrreq)
-	fmt.Printf("assigned address %s, wg address %s\n", r.GetAddress(), r.GetWireguardAddress())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to request address assign, err=%w", err)
 	}
-	overlayIP := r.GetWireguardAddress().ToNetIPNet()
 	var additionalIPs []*net.IPNet
-	for i := range r.GetAddress() {
-		additionalIPs = append(additionalIPs, r.GetAddress()[i].ToNetIPNet())
+	for i := range r.GetAdditionalAddresses() {
+		additionalIPs = append(additionalIPs, r.GetAdditionalAddresses()[i].ToNetIPNet())
 	}
 	sbr := &spec.SourceBasedRoutingOption{SourceIPRange: []*spec.AddressCIDR{}}
 	for _, r := range routeGather {
@@ -45,14 +44,14 @@ func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlser
 	}
 	req := &spec.RegisterPeerRequest{
 		Peer: &spec.Peer{
-			WireguardAddress: r.GetWireguardAddress(),
+			BaseAddress:   r.GetBaseAddress(),
+			TunnelAddress: r.GetTunnelAddress(),
 			Underlay: &spec.Peer_UnderlayLinuxKernelWireguard{
 				UnderlayLinuxKernelWireguard: &spec.UnderlayLinuxKernelWireguard{
 					Endpoint:  underlayAddress,
 					PublicKey: publickey,
 				},
 			},
-			Address:   r.GetAddress(),
 			Asnumber:  r.GetAsnumber(),
 			Name:      hostName,
 			SbrOption: sbr,
@@ -65,7 +64,7 @@ func NewClient(ctx context.Context, log *zap.Logger, hostName string, controlser
 	if !res.Ok {
 		return nil, nil, fmt.Errorf("ok is false when registering peer")
 	}
-	return &Client{context: ctx, OverlayIP: overlayIP, AdditionalIPs: additionalIPs, conn: conn, grpcConn: c}, r.GetAsnumber(), nil
+	return &Client{context: ctx, BaseIP: r.GetBaseAddress().ToNetIPNet(), TunnelIP: r.GetTunnelAddress().ToNetIPNet(), AdditionalIPs: additionalIPs, conn: conn, grpcConn: c}, r.GetAsnumber(), nil
 }
 
 func (c *Client) Close() error {

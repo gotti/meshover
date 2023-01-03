@@ -1315,11 +1315,11 @@ func (m *Peer) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetWireguardAddress()).(type) {
+		switch v := interface{}(m.GetBaseAddress()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, PeerValidationError{
-					field:  "WireguardAddress",
+					field:  "BaseAddress",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1327,23 +1327,63 @@ func (m *Peer) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, PeerValidationError{
-					field:  "WireguardAddress",
+					field:  "BaseAddress",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetWireguardAddress()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetBaseAddress()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return PeerValidationError{
-				field:  "WireguardAddress",
+				field:  "BaseAddress",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
 	}
 
-	for idx, item := range m.GetAddress() {
+	if m.GetTunnelAddress() == nil {
+		err := PeerValidationError{
+			field:  "TunnelAddress",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTunnelAddress()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PeerValidationError{
+					field:  "TunnelAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PeerValidationError{
+					field:  "TunnelAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTunnelAddress()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PeerValidationError{
+				field:  "TunnelAddress",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetAdditionalAddresses() {
 		_, _ = idx, item
 
 		if all {
@@ -1351,7 +1391,7 @@ func (m *Peer) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, PeerValidationError{
-						field:  fmt.Sprintf("Address[%v]", idx),
+						field:  fmt.Sprintf("AdditionalAddresses[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -1359,7 +1399,7 @@ func (m *Peer) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, PeerValidationError{
-						field:  fmt.Sprintf("Address[%v]", idx),
+						field:  fmt.Sprintf("AdditionalAddresses[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -1368,7 +1408,7 @@ func (m *Peer) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return PeerValidationError{
-					field:  fmt.Sprintf("Address[%v]", idx),
+					field:  fmt.Sprintf("AdditionalAddresses[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -2079,91 +2119,6 @@ func (m *AddressAssignResponse) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetWireguardAddress() == nil {
-		err := AddressAssignResponseValidationError{
-			field:  "WireguardAddress",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetWireguardAddress()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, AddressAssignResponseValidationError{
-					field:  "WireguardAddress",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, AddressAssignResponseValidationError{
-					field:  "WireguardAddress",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetWireguardAddress()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return AddressAssignResponseValidationError{
-				field:  "WireguardAddress",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(m.GetAddress()) < 1 {
-		err := AddressAssignResponseValidationError{
-			field:  "Address",
-			reason: "value must contain at least 1 item(s)",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	for idx, item := range m.GetAddress() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, AddressAssignResponseValidationError{
-						field:  fmt.Sprintf("Address[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, AddressAssignResponseValidationError{
-						field:  fmt.Sprintf("Address[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return AddressAssignResponseValidationError{
-					field:  fmt.Sprintf("Address[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
 	if m.GetAsnumber() == nil {
 		err := AddressAssignResponseValidationError{
 			field:  "Asnumber",
@@ -2202,6 +2157,131 @@ func (m *AddressAssignResponse) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.GetTunnelAddress() == nil {
+		err := AddressAssignResponseValidationError{
+			field:  "TunnelAddress",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetTunnelAddress()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AddressAssignResponseValidationError{
+					field:  "TunnelAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AddressAssignResponseValidationError{
+					field:  "TunnelAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTunnelAddress()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AddressAssignResponseValidationError{
+				field:  "TunnelAddress",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetBaseAddress() == nil {
+		err := AddressAssignResponseValidationError{
+			field:  "BaseAddress",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetBaseAddress()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AddressAssignResponseValidationError{
+					field:  "BaseAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AddressAssignResponseValidationError{
+					field:  "BaseAddress",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetBaseAddress()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AddressAssignResponseValidationError{
+				field:  "BaseAddress",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetAdditionalAddresses()) < 1 {
+		err := AddressAssignResponseValidationError{
+			field:  "AdditionalAddresses",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetAdditionalAddresses() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, AddressAssignResponseValidationError{
+						field:  fmt.Sprintf("AdditionalAddresses[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, AddressAssignResponseValidationError{
+						field:  fmt.Sprintf("AdditionalAddresses[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AddressAssignResponseValidationError{
+					field:  fmt.Sprintf("AdditionalAddresses[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	if len(errors) > 0 {

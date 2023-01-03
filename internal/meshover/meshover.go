@@ -65,11 +65,11 @@ func Run(ctx context.Context, logger *zap.Logger, settings Settings) error {
 	defer client.Close()
 
 	//set got meshover ip before
-	if err := tun.SetAddress(*client.OverlayIP); err != nil {
+	if err := tun.SetAddress(*client.BaseIP); err != nil {
 		return fmt.Errorf("failed to set tunnel address, err=%w", err)
 	}
 	tun.SetListenPort(12912)
-	stat.IPAddr = *client.OverlayIP
+	stat.IPAddr = *client.BaseIP
 	stat.ASN = asn
 
 	term := make(chan os.Signal, 1)
@@ -159,19 +159,19 @@ func Run(ctx context.Context, logger *zap.Logger, settings Settings) error {
 					frrdiff := []status.FrrPeerDiffrence{}
 					greInstance.UpdatePeers(diff)
 					for i, d := range diff {
-						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetWireguardAddress().ToNetIPNet().IP)
+						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetTunnelAddress().ToNetIPNet().IP)
 						fmt.Println("opossite", oppsite)
 						if err != nil {
-							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetWireguardAddress().ToNetIPNet().IP, err)
+							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetTunnelAddress().ToNetIPNet(), err)
 						}
 						fmt.Println("opposite", oppsite)
 						frrdiff = append(frrdiff, status.FrrPeerDiffrence{PeerDiffrence: diff[i], TunName: oppsite})
 					}
 					sbrdiffs := []iproute.SBRDiff{}
 					for _, d := range diff {
-						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.GetWireguardAddress().ToNetIPNet().IP)
+						oppsite, err := greInstance.FindTunNameByOppositeIP(d.NewPeer.TunnelAddress.ToNetIPNet().IP)
 						if err != nil {
-							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetWireguardAddress(), err)
+							log.Printf("failed to find tunname from oppositeIP \"%s\", err=%s\n", d.NewPeer.GetTunnelAddress().ToNetIPNet(), err)
 						}
 						sbr := d.NewPeer.GetSbrOption()
 						if sbr == nil {
@@ -263,6 +263,7 @@ func Run(ctx context.Context, logger *zap.Logger, settings Settings) error {
 	}
 	return nil
 }
+
 func receiveFromChan(logger *zap.Logger, bgpChan <-chan []*spec.PeerBGPStatus) []*spec.NodePeersStatus {
 	ret := []*spec.NodePeersStatus{}
 	remotesMap := map[string]*spec.NodePeersStatus{}

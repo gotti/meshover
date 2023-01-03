@@ -6,9 +6,7 @@ import "proto/ip.proto";
 
 service ControlPlaneService {
   rpc ListPeers(ListPeersRequest) returns (ListPeersResponse);
-  rpc AddressAssign(AddressAssignRequest) returns (AddressAssignResponse);
-  rpc RegisterPeer(RegisterPeerRequest) returns (RegisterPeerResponse);
-  rpc UpdatePeerStatus(UpdatePeerStatusRequest) returns (UpdatePeerStatusResponse);
+  rpc GetAddress(GetAddressRequest) returns (GetAddressResponse);
 }
 
 
@@ -51,15 +49,16 @@ message SourceBasedRoutingOption {
 message Peer {
   string name = 1;
   ASN asnumber = 2 [(validate.rules).message.required = true];
-  AddressCIDR wireguardAddress = 3;
-  repeated AddressCIDR address = 4;
+  AddressCIDR base_address = 3;
+  AddressCIDR tunnel_address = 4 [(validate.rules).message.required = true];
+  repeated AddressCIDR additional_addresses = 5;
   oneof underlay {
     option (validate.required) = true;
-    UnderlayUnknown underlayUnknown = 5;
-    UnderlayWireguard underlayWireguard = 6;
-    UnderlayLinuxKernelWireguard underlayLinuxKernelWireguard = 7;
+    UnderlayUnknown underlayUnknown = 9;
+    UnderlayWireguard underlayWireguard = 10;
+    UnderlayLinuxKernelWireguard underlayLinuxKernelWireguard = 11;
   }
-  SourceBasedRoutingOption sbrOption = 8;
+  SourceBasedRoutingOption sbrOption = 12;
 }
 
 message Peers {
@@ -73,22 +72,15 @@ message ListPeersResponse {
   Peers peers = 1;
 }
 
-message AddressAssignRequest {
+message GetAddressRequest {
   string name = 1;
 }
 
-message AddressAssignResponse {
-  AddressCIDR wireguardAddress = 1 [(validate.rules).message.required = true];
-  repeated AddressCIDR address = 2 [(validate.rules).repeated.min_items = 1];
-  ASN asnumber = 3 [(validate.rules).message.required = true];
-}
-
-message RegisterPeerRequest {
-  Peer peer = 1 [(validate.rules).message.required = true];
-}
-
-message RegisterPeerResponse {
-  bool ok = 1;
+message GetAddressResponse {
+  ASN asnumber = 1 [(validate.rules).message.required = true];
+  AddressCIDR tunnel_address = 2 [(validate.rules).message.required = true];
+  AddressCIDR base_address = 3 [(validate.rules).message.required = true];
+  repeated AddressCIDR additional_addresses = 4 [(validate.rules).repeated.min_items = 1];
 }
 
 message PeerStatus {

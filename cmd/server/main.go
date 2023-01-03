@@ -111,7 +111,7 @@ func (c *controlServer) AddressAssign(ctx context.Context, in *spec.AddressAssig
 	p := c.FindPeer(in.GetName())
 	if p != nil {
 		fmt.Println("found ")
-		ret := &spec.AddressAssignResponse{WireguardAddress: p.WireguardAddress, Address: p.GetAddress(), Asnumber: p.Asnumber}
+		ret := &spec.AddressAssignResponse{BaseAddress: p.GetBaseAddress(), TunnelAddress: p.GetTunnelAddress(), Asnumber: p.Asnumber}
 		return ret, nil
 	}
 	wgAddress, err := ip.GenerateRandomIP(*wireguardAddressRange)
