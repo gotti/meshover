@@ -6,7 +6,7 @@ require (
 	github.com/containerd/containerd v1.7.0
 	github.com/docker/docker v20.10.24+incompatible
 	github.com/envoyproxy/protoc-gen-validate v0.10.1
-	github.com/opencontainers/runtime-spec v1.1.0-rc.1.0.20230306064114-a7c7692b2a2c
+	github.com/opencontainers/runtime-spec v1.1.0-rc.2
 	github.com/prometheus/client_golang v1.15.0
 	github.com/spf13/cobra v1.7.0
 	github.com/vishvananda/netlink v1.2.1-beta.2.0.20221107222636-d3c0a2caa559
