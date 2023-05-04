@@ -13,7 +13,7 @@ require (
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.8.0
 	golang.zx2c4.com/wireguard v0.0.20201121
-	google.golang.org/grpc v1.54.0
+	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 	k8s.io/cri-api v0.27.1
 )
@@ -60,7 +60,7 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/oauth2 v0.5.0 // indirect
+	golang.org/x/oauth2 v0.6.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/term v0.7.0 // indirect
