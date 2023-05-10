@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/containerd/containerd v1.7.1
-	github.com/docker/docker v23.0.3+incompatible
+	github.com/docker/docker v23.0.6+incompatible
 	github.com/envoyproxy/protoc-gen-validate v0.10.1
 	github.com/opencontainers/runtime-spec v1.1.0-rc.2
 	github.com/prometheus/client_golang v1.15.1
