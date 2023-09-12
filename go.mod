@@ -3,7 +3,7 @@ module github.com/gotti/meshover
 go 1.19
 
 require (
-	github.com/containerd/containerd v1.7.5
+	github.com/containerd/containerd v1.7.6
 	github.com/docker/docker v23.0.6+incompatible
 	github.com/envoyproxy/protoc-gen-validate v1.0.2
 	github.com/opencontainers/runtime-spec v1.1.0
@@ -20,7 +20,7 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/Microsoft/hcsshim v0.10.0-rc.8 // indirect
+	github.com/Microsoft/hcsshim v0.11.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
