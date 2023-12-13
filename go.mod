@@ -1,6 +1,8 @@
 module github.com/gotti/meshover
 
-go 1.19
+go 1.21
+
+toolchain go1.21.5
 
 require (
 	github.com/containerd/containerd v1.7.11
@@ -15,7 +17,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.20201121
 	google.golang.org/grpc v1.60.0
 	google.golang.org/protobuf v1.31.0
-	k8s.io/cri-api v0.28.4
+	k8s.io/cri-api v0.29.0
 )
 
 require (
