@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.5
 
 require (
-	github.com/containerd/containerd v1.7.11
+	github.com/containerd/containerd v1.7.12
 	github.com/docker/docker v23.0.8+incompatible
 	github.com/envoyproxy/protoc-gen-validate v1.0.2
 	github.com/opencontainers/runtime-spec v1.1.0
