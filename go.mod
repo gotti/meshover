@@ -3,7 +3,7 @@ module github.com/gotti/meshover
 go 1.21.6
 
 require (
-	github.com/containerd/containerd v1.7.12
+	github.com/containerd/containerd v1.7.13
 	github.com/docker/docker v23.0.9+incompatible
 	github.com/envoyproxy/protoc-gen-validate v1.0.4
 	github.com/opencontainers/runtime-spec v1.1.0
