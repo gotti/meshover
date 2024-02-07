@@ -11,7 +11,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/vishvananda/netlink v1.2.1-beta.2.0.20221107222636-d3c0a2caa559
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.18.0
+	golang.org/x/crypto v0.19.0
 	golang.zx2c4.com/wireguard v0.0.20201121
 	google.golang.org/grpc v1.61.0
 	google.golang.org/protobuf v1.32.0
@@ -63,8 +63,8 @@ require (
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/oauth2 v0.14.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/term v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	golang.org/x/tools v0.13.0 // indirect
