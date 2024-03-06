@@ -14,7 +14,7 @@ require (
 	golang.org/x/crypto v0.21.0
 	golang.zx2c4.com/wireguard v0.0.20201121
 	google.golang.org/grpc v1.62.1
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/protobuf v1.33.0
 	k8s.io/cri-api v0.29.2
 )
 
