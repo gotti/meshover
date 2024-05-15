@@ -1826,6 +1826,7 @@ k8s.io/cri-api v0.29.2/go.mod h1:9fQTFm+wi4FLyqrkVUoMJiUB3mE74XrVvHz8uFY/sSw=
 k8s.io/cri-api v0.29.3/go.mod h1:3X7EnhsNaQnCweGhQCJwKNHlH7wHEYuKQ19bRvXMoJY=
 k8s.io/cri-api v0.29.4/go.mod h1:A6pdbjzML2xi9B0Clqn5qt1HJ3Ik12x2j+jv/TkqjRE=
 k8s.io/cri-api v0.30.0/go.mod h1://4/umPJSW1ISNSNng4OwjpkvswJOQwU8rnkvO8P+xg=
+k8s.io/cri-api v0.30.1/go.mod h1://4/umPJSW1ISNSNng4OwjpkvswJOQwU8rnkvO8P+xg=
 k8s.io/gengo v0.0.0-20200413195148-3a45101e95ac/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
 k8s.io/gengo v0.0.0-20200428234225-8167cfdcfc14/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
 k8s.io/gengo v0.0.0-20201113003025-83324d819ded/go.mod h1:FiNAH4ZV3gBg2Kwh89tzAEV2be7d5xI0vBa/VySYy3E=
