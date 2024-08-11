@@ -201,6 +201,9 @@ func Run(ctx context.Context, logger *zap.Logger, settings Settings) error {
 		}
 	}()
 	go func() {
+		if settings.StatusServer == "" {
+			return
+		}
 		statusClient, err := statuspusher.NewClient(ctx, logger, settings.StatusServer)
 		if err != nil {
 			log.Fatalf("failed to create status pusher, err=%s", err)
