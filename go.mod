@@ -15,7 +15,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.20201121
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
-	k8s.io/cri-api v0.30.3
+	k8s.io/cri-api v0.31.0
 )
 
 require (
@@ -70,6 +70,6 @@ require (
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
 	gotest.tools/v3 v3.3.0 // indirect
 )
