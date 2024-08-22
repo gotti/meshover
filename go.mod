@@ -9,7 +9,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/prometheus/client_golang v1.20.1
 	github.com/spf13/cobra v1.8.1
-	github.com/vishvananda/netlink v1.2.1-beta.2.0.20221107222636-d3c0a2caa559
+	github.com/vishvananda/netlink v1.2.1
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.26.0
 	golang.zx2c4.com/wireguard v0.0.20201121
@@ -56,7 +56,7 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74 // indirect
+	github.com/vishvananda/netns v0.0.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
