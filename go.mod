@@ -7,7 +7,7 @@ require (
 	github.com/docker/docker v23.0.9+incompatible
 	github.com/envoyproxy/protoc-gen-validate v1.1.0
 	github.com/opencontainers/runtime-spec v1.2.0
-	github.com/prometheus/client_golang v1.20.3
+	github.com/prometheus/client_golang v1.20.4
 	github.com/spf13/cobra v1.8.1
 	github.com/vishvananda/netlink v1.3.0
 	go.uber.org/zap v1.27.0
