@@ -6,7 +6,7 @@ toolchain go1.23.3
 
 require (
 	github.com/containerd/containerd v1.7.24
-	github.com/docker/docker v23.0.9+incompatible
+	github.com/docker/docker v24.0.9+incompatible
 	github.com/envoyproxy/protoc-gen-validate v1.1.0
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/prometheus/client_golang v1.20.5
