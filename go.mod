@@ -13,7 +13,7 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/vishvananda/netlink v1.3.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.30.0
+	golang.org/x/crypto v0.31.0
 	golang.zx2c4.com/wireguard v0.0.20201121
 	google.golang.org/grpc v1.68.1
 	google.golang.org/protobuf v1.35.2
