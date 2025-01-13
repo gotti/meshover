@@ -15,7 +15,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.32.0
 	golang.zx2c4.com/wireguard v0.0.20201121
-	google.golang.org/grpc v1.69.2
+	google.golang.org/grpc v1.69.4
 	google.golang.org/protobuf v1.36.2
 	k8s.io/cri-api v0.32.0
 )
