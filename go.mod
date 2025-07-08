@@ -2,7 +2,7 @@ module github.com/gotti/meshover
 
 go 1.24.0
 
-toolchain go1.24.4
+toolchain go1.24.5
 
 require (
 	github.com/containerd/containerd v1.7.27
