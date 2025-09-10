@@ -17,7 +17,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.20201121
 	google.golang.org/grpc v1.75.1
 	google.golang.org/protobuf v1.36.9
-	k8s.io/cri-api v0.34.0
+	k8s.io/cri-api v0.34.1
 )
 
 require (
