@@ -18,7 +18,7 @@ import (
 	"github.com/gotti/meshover/status"
 )
 
-const frrImage = "frrouting/frr:v8.3.1"
+const frrImage = "quay.io/frrouting/frr:10.4.1"
 
 // Backend defines backend of frr, such as docker, nerdctl...
 type Backend interface {
@@ -169,7 +169,7 @@ func (f *DockerInstance) Run(ctx context.Context) error {
 	}
 	f.client = cli
 
-	reader, err := f.client.ImagePull(ctx, "frrouting/frr:v8.3.0", types.ImagePullOptions{})
+	reader, err := f.client.ImagePull(ctx, frrImage, types.ImagePullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to image pull, err=%w", err)
 	}
