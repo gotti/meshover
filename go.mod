@@ -7,7 +7,7 @@ toolchain go1.25.4
 require (
 	github.com/bufbuild/connect-go v1.10.0
 	github.com/containerd/containerd v1.7.29
-	github.com/docker/docker v25.0.6+incompatible
+	github.com/docker/docker v25.0.14+incompatible
 	github.com/envoyproxy/protoc-gen-validate v1.2.1
 	github.com/opencontainers/runtime-spec v1.3.0
 	github.com/prometheus/client_golang v1.23.2
