@@ -8,7 +8,7 @@ require (
 	github.com/docker/docker v25.0.14+incompatible
 	github.com/envoyproxy/protoc-gen-validate v1.2.1
 	github.com/prometheus/client_golang v1.23.2
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/vishvananda/netlink v1.3.1
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.45.0
