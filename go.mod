@@ -2,7 +2,7 @@ module github.com/gotti/meshover
 
 go 1.24.0
 
-toolchain go1.25.5
+toolchain go1.25.6
 
 require (
 	github.com/docker/docker v25.0.14+incompatible
