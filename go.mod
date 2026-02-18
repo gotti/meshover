@@ -1,12 +1,12 @@
 module github.com/gotti/meshover
 
-go 1.24.0
+go 1.24.1
 
 toolchain go1.26.0
 
 require (
 	github.com/docker/docker v25.0.14+incompatible
-	github.com/envoyproxy/protoc-gen-validate v1.3.0
+	github.com/envoyproxy/protoc-gen-validate v1.3.3
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spf13/cobra v1.10.2
 	github.com/vishvananda/netlink v1.3.1
