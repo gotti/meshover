@@ -12,7 +12,7 @@ require (
 	github.com/vishvananda/netlink v1.3.1
 	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.51.0
-	google.golang.org/grpc v1.81.0
+	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.11
 )
 
