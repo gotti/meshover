@@ -5,7 +5,7 @@ go 1.25.0
 toolchain go1.27.0
 
 require (
-	github.com/docker/docker v25.0.16+incompatible
+	github.com/docker/docker v25.0.17+incompatible
 	github.com/envoyproxy/protoc-gen-validate v1.3.3
 	github.com/prometheus/client_golang v1.24.1
 	github.com/spf13/cobra v1.10.2
